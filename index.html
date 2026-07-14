@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>职业测评表单 · 多源三角验证</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --ink:#1f2329; --sub:#646a73;
+    --line:#e5e6eb; --brand:#3a6ea5; --brand-soft:#eaf1f8; --core:#7a5cc0;
+    --ok:#2e9e5b; --warn:#d97706; --chip:#eef0f3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.6;}
+  header{padding:20px 24px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  header h1{margin:0;font-size:20px}
+  header p{margin:6px 0 0;color:var(--sub);font-size:13px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--sub)}
+  .legend b{color:var(--ink)}
+  .progress{margin-top:12px;height:8px;background:var(--chip);border-radius:6px;overflow:hidden}
+  .progress>i{display:block;height:100%;width:0;background:var(--brand);transition:width .2s}
+  .pcount{font-size:12px;color:var(--sub);margin-top:6px}
+  .scen-tip{font-size:13px;color:var(--sub);margin:4px 0 8px}
+  .scen-label{display:block;font-size:13px;margin:4px 0;cursor:pointer}
+  main{max-width:880px;margin:18px auto;padding:0 16px}
+  .group{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+  .group h2{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:8px}
+  .group .gscore{margin-left:auto;font-size:13px;color:var(--sub)}
+  .group .gscore b{color:var(--brand);font-size:15px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--brand-soft);color:var(--brand);font-weight:600}
+  .badge.optional{background:#f0eef7;color:var(--core)}
+  .q{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px dashed var(--line)}
+  .q:first-of-type{border-top:none}
+  .q .no{flex:0 0 22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:var(--chip);color:var(--sub);font-size:12px;margin-top:2px}
+  .q .txt{flex:1;font-size:14px}
+  .scale{flex:0 0 auto;display:flex;gap:6px}
+  .scale button{width:34px;height:34px;border:1px solid var(--line);background:var(--card);border-radius:8px;cursor:pointer;font-size:14px;color:var(--ink);transition:.12s}
+  .scale button:hover{border-color:var(--brand)}
+  .scale button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+  .gtools{margin-top:8px;font-size:12px}
+  .gtools a{color:var(--brand);cursor:pointer;margin-right:14px;text-decoration:none}
+  .results{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:8px 0 28px}
+  .results h2{margin:0 0 10px;font-size:16px}
+  .sums{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+  .sums div{background:var(--chip);border-radius:8px;padding:8px;text-align:center;font-size:13px}
+  .sums div b{display:block;font-size:18px;color:var(--brand)}
+  textarea{width:100%;height:120px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--ink)}
+  .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .btn{border:none;border-radius:8px;padding:9px 16px;font-size:14px;cursor:pointer}
+  .btn.primary{background:var(--brand);color:#fff}
+  .btn.ghost{background:var(--chip);color:var(--ink)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .hint{font-size:12px;color:var(--warn);margin-top:8px;min-height:16px}
+  .rankrow{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px dashed var(--line)}
+  .rankrow:first-of-type{border-top:none}
+  .rankrow .vname{flex:1;font-size:14px}
+  .rankrow select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cfield{display:flex;flex-direction:column;gap:4px}
+  .cfield label{font-size:13px;color:var(--sub)}
+  .cfield input,.cfield select,.cfield textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:14px;font-family:inherit;color:var(--ink)}
+  details{margin-bottom:16px}
+  details>summary{cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;list-style:none}
+  details>summary::-webkit-details-marker{display:none}
+  details[open]>summary{margin-bottom:16px}
+  @media(max-width:560px){.sums{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.scale button{width:30px;height:30px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>职业测评表单 · 多源三角验证</h1>
+  <p>本表采用<strong>模块化渐进</strong>设计：先完成<strong>核心层</strong>（职业兴趣 + 工作价值观排序 + 现实约束，约 8–10 分钟），即可生成有参考性的三角验证画像；<strong>深度层</strong>（荣格八维 + 大五人格，均为可选）点开可让"思维方式"与"性情自我调节"两支柱更完整。所有题目无标准答案，照实选最准。</p>
+  <div class="legend">
+    <span><b>1</b> 非常不符合</span><span><b>2</b> 不太符合</span><span><b>3</b> 中立</span>
+    <span><b>4</b> 较符合</span><span><b>5</b> 非常符合</span>
+  </div>
+  <div class="progress"><i id="bar"></i></div>
+  <div class="pcount" id="pcount">核心层尚未完成</div>
+</header>
+
+<main id="form"></main>
+
+<div class="results" id="results">
+  <h2>结果</h2>
+  <div class="sums" id="sums"></div>
+  <textarea id="out" readonly placeholder="完成核心层后，这里会生成可复制的分数串……"></textarea>
+  <div class="actions">
+    <button class="btn primary" id="copy" disabled>复制分数串</button>
+    <button class="btn ghost" id="rand">随机填写</button>
+    <button class="btn ghost" id="sample">示例填写</button>
+    <button class="btn ghost" id="reset">全部重置</button>
+    <button class="btn ghost" id="export">导出报告</button>
+  </div>
+  <div class="hint" id="hint">完成核心层（兴趣 24 题 + 价值观排序 + 约束），就能复制分数串贴回「职业规划师」对话啦。深度层（荣格八维）可之后慢慢补。</div>
+</div>
+
+<script>
+// ===== 题库规模元信息（供回归校验与文档同步）=====
+const SELF = 4;            // 每功能渲染题数（荣格融合池抽 4，深度层用）
+const TOTAL_JUNG = 32;     // 荣格自评题总数 = 8 功能 × 4
+const POOL_SIZES = { self: 13, selfDraw: 4, priorityPairsPerGroup: 3, priorityDraw: 1, scenarios: 10, scenarioDraw: 5,
+                     hollandPerDim: 4, hollandDims: 6, valuesCount: 9, bigfivePerDim: 4, bigfiveDims: 5, aisubPerDim: 3, aisubDims: 3 };
+const state = {};          // "Ti-0": value（荣格融合题库）
+let AGG = {};            // 汇总供报告导出（buildReportHTML 使用）
+
+// ===== 核心层（一）：Holland RIASEC 职业兴趣（每维 4 题，1–5，求和 4–20）=====
+const HOLLAND_DIMS = [
+  {key:"R", name:"实际型 R", pool:[
+    "拆装、修理或组装实物设备", "在户外/现场而非办公室工作", "操作机械、工具或驾驶", "完成能直接看到成果的体力/技术活"]},
+  {key:"I", name:"研究型 I", pool:[
+    "钻研一个现象背后的原理", "分析数据、找出规律", "独立研究复杂或抽象的问题", "通过实验/推理验证一个假设"]},
+  {key:"A", name:"艺术型 A", pool:[
+    "进行写作、设计、音乐或视觉创作", "在没有标准答案的环境里自由发挥", "用原创方式表达想法或情感", "欣赏并创造美的事物"]},
+  {key:"S", name:"社会型 S", pool:[
+    "帮助他人解决困难或成长", "教学、辅导或培训别人", "在团队协作中支持他人", "关心并回应他人的情绪与需要"]},
+  {key:"E", name:"企业型 E", pool:[
+    "说服他人接受我的观点或方案", "带领团队达成目标", "推动一个项目/生意并承担风险", "在竞争中争取更好的结果"]},
+  {key:"C", name:"常规型 C", pool:[
+    "按清晰流程把事情做准确", "整理、归类、维护数据或档案", "在有明确规则的环境里工作", "关注细节、避免差错"]}
+];
+const hstate = {};         // "R_0": value
+const HSELF = 4;
+
+// ===== 深度层补充：大五人格（可选，固定 4 题/维，1–5，求和 4–20）=====
+const BIGFIVE_DIMS = [
+  {key:"O", name:"开放性 O", pool:[
+    "我喜欢接触新观点、新方法，对陌生领域有好奇心",
+    "我享受抽象思考与想象，喜欢琢磨“为什么”和“如果”",
+    "我对艺术、哲学或不同文化抱有兴趣",
+    "我乐于尝试和既往做法不同的新方案"]},
+  {key:"C", name:"尽责性 C", pool:[
+    "我做事有计划、靠谱，答应的事会跟进到底",
+    "我注重细节与条理，讨厌潦草和随意",
+    "我倾向于为目标提前准备、设定里程碑",
+    "我对自己要求高，追求把事情做到位"]},
+  {key:"E", name:"外向性 E", pool:[
+    "我在与人互动中充电，热闹场合让我更有能量",
+    "我乐于表达、主动牵头或带动气氛",
+    "我偏好通过讨论和协作来推进事情",
+    "我容易结识新朋友，享受被关注或被需要"]},
+  {key:"A", name:"宜人性 A", pool:[
+    "我倾向于信任、体谅他人，不愿与人起冲突",
+    "我乐于助人，会优先考虑别人的感受",
+    "我习惯妥协、维系和谐，哪怕自己吃点亏",
+    "我对他人的情绪敏感，愿意花心思照顾关系"]},
+  {key:"N", name:"神经质 N（高分=易焦虑/情绪波动；越低越稳定）", pool:[
+    "面对压力或不确定，我容易紧张、焦虑",
+    "我情绪起伏较大，小事也容易影响心情",
+    "我常担心事情出错，对负面反馈比较敏感",
+    "在批评或冲突面前，我需要较长时间平复"]}
+];
+const bfstate = {};        // "O-0": value（大五）
+const BSELF = 4;
+
+// ===== 深度层补充：AI 适应力自评（可选，3 题，1–5，反映 AI 替代维度）=====
+const AISUB_DIMS = [
+  {key:"暴露度", name:"AI 暴露度", pool:[
+    "我日常大量工作是高度重复、规则明确的（如固定报表、标准审批、模板化文书）",
+    "我的产出很容易被现有软件 / 脚本直接生成或替代",
+    "岗位核心价值在于\"按流程不出错\"，而非难以复制的判断或创意"]},
+  {key:"适应力", name:"AI 适应力", pool:[
+    "我乐于尝试新工具，并会主动把 AI 接进日常工作流",
+    "遇到新工具，我倾向于先上手摸索而不是等别人教",
+    "我相信\"用得好 AI 的人\"会比\"不用的人\"更有竞争力"]},
+  {key:"人力资本", name:"人力资本占比", pool:[
+    "我的工作大量依赖面对面沟通、说服与关系经营",
+    "我的产出需要原创构思、审美或复杂问题定义",
+    "我的决策常涉及模糊情境下的责任判断与权衡"]}
+];
+const asubstate = {};      // "暴露度-0": value
+const AISUB_N = 3;
+
+
+// ===== 核心层（二）：职业价值观排序（9 项，排出前 5）=====
+const VALUES = ["自主性","成就与影响力","经济回报","稳定与安全","成长与学习","工作生活平衡","社会贡献","地位与声望","人际与归属"];
+
+// ===== 核心层（三）：约束与现实条件 =====
+// 字段由表单收集，存于 cstate
+
+// ===== 深度层：荣格八维融合自评（每功能 pool(13) 抽 4）=====
+const FUNCS = [
+  {key:"Ti", name:"内倾思维 Ti",
+   pool:[
+     "在做决定时，我优先分析逻辑和客观原则，较少考虑人际关系。",
+     "我习惯独自思考并构建内在的逻辑体系，不易被他人说服。",
+     "我会仔细审查信息的逻辑结构，对理论的自洽性有很高要求。",
+     "我认为观点需要经过严密论证才值得接受，直觉不可靠。",
+     "面对复杂问题，我习惯拆成若干子问题逐一理清。",
+     "我更在意一个结论“经不经得起推敲”，而不是“大家是不是都这么认为”。",
+     "解释复杂的事，我会本能地先搭框架、理清前提，再展开细节。",
+     "遇到争议，我倾向于回到定义和逻辑本身去判断，而非凭气氛或人数。",
+     "即便与多数人意见相左，只要我的推理站得住，我也会坚持——对我而言，求真比合群更重要。",
+     "我更享受把问题想透、找到底层原理的过程，有时甚至胜过直接得到一个结果。",
+     "我对于“事情为什么这样运作”的好奇，常常超过对“怎么用”的关注。",
+     "如果一件事在逻辑上讲不通，即使它“有用”，我也会本能地抗拒。",
+     "我享受和人在观点上较真、把道理辩明白，这比表面和谐更让我满足。"
+   ]},
+{key:"Te", name:"外倾思维 Te",
+   pool:[
+     "我习惯制定清晰的行动计划并推进执行，注重效率和产出。",
+     "我能快速发现流程中的低效之处，并自然地想去纠正优化。",
+     "我认为成绩和结果是最重要的衡量标准，会以此要求自己和他人。",
+     "我会主动收集外部数据和标准，以客观衡量事情的进展。",
+     "遇到混乱局面，我会先建立秩序和规则，再推进。",
+     "我习惯用“能不能落地”来快速筛掉不切实际的想法。",
+     "看到目标没进展，我会先拆卡点、调资源，而不是反复纠结原因。",
+     "我更喜欢“先跑起来再迭代”，边做边修正，胜过迟迟不动。",
+     "我做事的动力来自“把事情做成、看到结果”，过程是否优雅不如交付重要。",
+     "我倾向于用可量化的指标定义成功，模糊的目标会让我不安。",
+     "我本能地想优化低效的流程，哪怕那不是我的事——看见混乱我就想理顺。",
+     "我判断一个方案好不好，首要看“投入产出比”和“能不能按时交”。",
+     "我受不了只有口号没有步骤的会，总想把它落成可执行的动作。"
+   ]},
+{key:"Fi", name:"内倾情感 Fi",
+   pool:[
+     "我内心有强烈的个人价值观，并以此作为行为的最终准则。",
+     "我很容易对艺术或文学作品产生情感共鸣，重视情感真实。",
+     "我认为真诚是最重要的品质，不愿为利益而伪装自己的态度。",
+     "我很难去做与个人良心相悖的事，即便有巨大利益。",
+     "即便不被理解，我也愿意坚持自己认为正确的事。",
+     "一段关系或一份工作，若让我觉得“违背本心”，再光鲜我也难长久。",
+     "我对“人是不是真的善良/真诚”极其敏感，这常先于能力被我看见。",
+     "我做决定时，内心的“舒不舒服、对不对得起自己”权重很高。",
+     "当我的价值观被挑战，我会本能地守住立场，哪怕代价是不被理解。",
+     "我容易被“真心而独特”的人或作品吸引，套路化的东西让我疏离。",
+     "我能敏锐察觉别人是否“言不由衷”，真诚对我而言是不可妥协的底色。",
+     "我可以为“觉得值”的事吃很多苦，却很难为“只是应该做”的事坚持。",
+     "我反感被要求“统一思想”，我的认同必须自己长出来。"
+   ]},
+{key:"Fe", name:"外倾情感 Fe",
+   pool:[
+     "我会敏锐地感知他人的情绪，并倾向于维护群体和谐。",
+     "我很容易理解并回应他人的需求，常被认为贴心、好相处。",
+     "当发生人际冲突时，我会努力找到双方都能接受的折中方案。",
+     "我能自然地营造开放、温暖的交流氛围，让他人敞开心扉。",
+     "当有人被忽视或孤立时，我会主动去照顾对方的感受。",
+     "进入一个新群体，我会先默默感受气氛，再决定怎么开口。",
+     "看到有人尴尬或被排挤，我会不自觉地去圆场、打圆场。",
+     "我常把“别让人难堪”放在表达真实想法之前。",
+     "我本能地先照顾群体气氛，哪怕自己不起眼，也不愿有人被冷落。",
+     "做决定时，我会把“对大家的影响”放在重要位置，而非只看对错。",
+     "在冲突里我天然想找到双方都能接受的折中，让关系不断裂比赢更重要。",
+     "我做决定常会先想“说了这话对方会不会不舒服”。",
+     "集体里若气氛不对，我很难安心做自己的事，会想去调和。"
+   ]},
+{key:"Ni", name:"内倾直觉 Ni",
+   pool:[
+     "我经常沉浸于对未来的直觉想象，并从中获得深刻的洞察。",
+     "我常有“灵光一现”的时刻，突然理解复杂事物的核心意义。",
+     "我关注长远意义和总体趋势，对琐碎的日常细节缺乏耐心。",
+     "我对符号、隐喻和事物背后的象征意义着迷。",
+     "对我来说，理解现象背后的“大问题”比解决眼前实务更有意义。",
+     "我常能从一个细节“嗅”到整件事后面的走向。",
+     "比起处理眼前杂事，我更想先确认“这件事最终要去哪”。",
+     "很多决定我做得很慢，但一旦定了，往往是因为“想通了”而非算清了。",
+     "我常常在信息还不完整时，就“预感”到事情走向，这种直觉我很信任。",
+     "我习惯先想清楚长远方向，再决定眼前怎么做，否则会不安。",
+     "比起解决眼前实务，我更被“这件事到底意味着什么”吸引。",
+     "我常被“这件事到底有没有长远意义”牵着走，琐碎任务让我空。",
+     "我愿意为一个看得到的“大方向”忍受当下的不确定和混乱。"
+   ]},
+{key:"Ne", name:"外倾直觉 Ne",
+   pool:[
+     "我享受探寻各种新想法，善于在不同概念间建立新颖联系。",
+     "我倾向于同时开展多项任务，享受头脑风暴的思维发散过程。",
+     "我经常由一个话题联想到许多无关的点，谈话显得跳跃。",
+     "我很容易对新的可能性感到兴奋，有时会因此忘记手头任务。",
+     "我往往想到很多令人兴奋的计划，但未必每个都去完成。",
+     "听到一个观点，我立刻会想“反过来看会怎样、还能用在哪”。",
+     "我容易对“还没定型”的事更兴奋，一旦确定反而不那么心动。",
+     "聊天时我常把看似不相干的两件事连起来，自己觉得有趣。",
+     "我兴趣广泛但可能不深，对我来说“有没有意思”比“有没有用”更先驱动我。",
+     "读到一行字我会联想到很多延伸的可能，思维常常自己跑远。",
+     "我享受从看似无关的事物里找到有趣关联的那一刻，那让我兴奋。",
+     "比起把一件事做深，我更容易被“下一个有意思的可能性”勾走。",
+     "我享受头脑风暴里那种“什么都还没定、但什么都可能”的状态。"
+   ]},
+{key:"Si", name:"内倾感觉 Si",
+   pool:[
+     "我信赖过去的经验和可靠的细节，偏好稳定有序的环境。",
+     "做决策时，我会仔细回顾以往类似情况的结果来辅助判断。",
+     "我偏好按部就班、有据可循的任务，在熟悉的领域最具效能。",
+     "我习惯保持生活的规律，突然的变化会让我烦躁。",
+     "我偏好用已验证的可靠方法来处理问题，不轻易尝试未经验证的新途径。",
+     "我偏爱“之前试过、靠谱”的做法，对新花样会先观望。",
+     "熟悉的人和场景让我放松，陌生的安排会悄悄消耗我。",
+     "我会不自觉地记着过去类似的经历，用来判断眼前这事。",
+     "重温老照片、旧日记会让我踏实，过去对我是一种安全感的来源。",
+     "我做事喜欢有章可循，按既定流程走比临场发挥更让我安心。",
+     "熟悉的环境和老方法让我更有安全感与效率，我不太想冒险换路。",
+     "我把重要的日子、约定和流程记在心里，乱改会让我不安。",
+     "老地方、老味道、老习惯，是我疲惫时的充电方式。"
+   ]},
+{key:"Se", name:"外倾感觉 Se",
+   pool:[
+     "我对周遭的感官刺激反应迅速，喜欢动手操作和即时体验。",
+     "我喜欢融入当下环境，直接通过触觉、嗅觉、味觉等感受事物。",
+     "我喜欢参与体育运动、烹饪或户外活动，享受身体的参与。",
+     "在人群中，我通常会注意谁换了新发型或周围的视觉细节。",
+     "我倾向于通过实际的行动而非空想来解决问题或获取经验。",
+     "我常是被“现场气氛、声音、味道”带着走的人，当下感很强。",
+     "遇到事，我更想“先上手摸一摸”，而非先读说明。",
+     "我对环境里的变化（谁换了发型、灯是不是坏了）很敏感。",
+     "我容易沉浸于电影、音乐或自然的感官冲击里，那一刻我很在。",
+     "我更相信亲眼所见、亲手所做的直接经验，而非抽象推论。",
+     "遇到事我常先行动试一试，边做边调整，胜过反复计划。",
+     "我更愿意用“亲自试过好不好玩”来判断值不值得，而非看评价。",
+     "我容易被新鲜、刺激、能立刻上手的东西吸引，然后才想意义。"
+   ]}
+];
+const SAMPLE = {
+  Ni:[5,5,5,4], Te:[4,4,4,3], Ne:[3,3,3,3], Ti:[3,3,2,3],
+  Fi:[3,2,3,2], Fe:[2,2,2,2], Si:[2,2,2,1], Se:[2,2,1,2]
+};
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+const form = document.getElementById('form');
+
+// ---------- 渲染核心层 ----------
+// 核心层（一）Holland
+(function renderHolland(){
+  const sec = document.createElement('section');
+  sec.className = 'group';
+  sec.innerHTML = '<h2>① 职业兴趣（Holland RIASEC）<span class="badge">核心必做</span><span class="gscore">小计 <b id="g-H">0</b>/120</span></h2>'
+    + '<p class="scen-tip">按"我有多被这些事吸引、乐意做"打分，每维 4 题，1–5。六维求和各 4–20，取最高 3 维拼兴趣码。</p>';
+  HOLLAND_DIMS.forEach(d=>{
+    const sub = document.createElement('div');
+    sub.innerHTML = '<div style="font-size:13px;color:var(--sub);margin:8px 0 2px;font-weight:600">'+d.name+' <span class="gscore">小计 <b id="g-'+d.key+'">0</b>/20</span></div>';
+    sec.appendChild(sub);
+    for(let p=0; p<HSELF; p++){
+      const id = d.key+'_'+p; hstate[id]=0;
+      const q = document.createElement('div'); q.className='q';
+      let btns=''; for(let v=1; v<=5; v++) btns += '<button data-hid="'+id+'" data-v="'+v+'">'+v+'</button>';
+      q.innerHTML = '<div class="no">'+(p+1)+'</div><div class="txt">'+d.pool[p]+'</div><div class="scale">'+btns+'</div>';
+      sec.appendChild(q);
+    }
+  });
+  form.appendChild(sec);
+})();
+
+// 核心层（二）价值观排序
+(function renderValues(){
+  const sec = document.createElement('section');
+  sec.className='group';
+  sec.innerHTML = '<h2>② 工作价值观排序<span class="badge">核心必做</span></h2>'
+    + '<p class="scen-tip">从 9 项里排出你最看重的顺序（1=最重要 … 9=最不重要）。系统取前 5 项，其中前 3 项为该心价值观。排序比打分更准——逼自己取舍。</p>';
+  VALUES.forEach((v,i)=>{
+    const row = document.createElement('div'); row.className='rankrow';
+    let opts = '<option value="">—</option>';
+    for(let r=1; r<=9; r++) opts += '<option value="'+r+'">'+r+'</option>';
+    row.innerHTML = '<div class="vname">'+v+'</div><select data-vi="'+i+'">'+opts+'</select>';
+    sec.appendChild(row);
+  });
+  form.appendChild(sec);
+})();
+
+// 核心层（三）约束
+(function renderConstraints(){
+  const sec = document.createElement('section');
+  sec.className='group';
+  sec.innerHTML = '<h2>③ 现实约束（硬过滤）<span class="badge">核心必做</span></h2>'
+    + '<p class="scen-tip">这些边界决定"哪些方向即使契合也不现实"。尽量如实填，推荐会更贴合你的情况。</p>'
+    + '<div class="cgrid">'
+    + '<div class="cfield"><label>现居城市</label><input id="c_city" placeholder="如 广州"></div>'
+    + '<div class="cfield"><label>是否可迁移</label><select id="c_move"><option value="">—</option><option>不可迁移</option><option>可有条件迁移</option><option>可接受迁移</option></select></div>'
+    + '<div class="cfield"><label>薪资底线（月，元）</label><input id="c_salary" placeholder="如 15000"></div>'
+    + '<div class="cfield"><label>风险承受度</label><select id="c_risk"><option value="">—</option><option>稳定优先</option><option>平衡</option><option>进取</option></select></div>'
+    + '<div class="cfield"><label>期望行动时间窗</label><select id="c_window"><option value="">—</option><option>3 个月内</option><option>半年内</option><option>1 年内</option><option>1–2 年</option></select></div>'
+    + '<div class="cfield"><label>为转型投入意愿</label><select id="c_invest"><option value="">—</option><option>愿意系统学习/考证</option><option>有限</option><option>不愿</option></select></div>'
+    + '<div class="cfield"><label>实时市场数据（可选·联网）</label><select id="c_market"><option value="否">否（默认，不联网）</option><option value="是">是（拉取当前薪资/需求趋势）</option></select></div>'
+    + '</div>'
+    + '<div class="cfield" style="margin-top:12px"><label>家庭 / 健康约束（可留空）</label><textarea id="c_family" placeholder="如需照顾家庭、健康限制、不能频繁出差/夜班等"></textarea></div>'
+    + '<div class="cfield" style="margin-top:12px"><label>绝对不能接受项（红线，可留空）</label><textarea id="c_redline" placeholder="如 绝不做频繁出差 / 不接受纯销售提成 / 不加班到深夜"></textarea></div>';
+  form.appendChild(sec);
+})();
+
+// ---------- 深度层（荣格八维，可折叠，可选） ----------
+const deepWrap = document.createElement('details');
+deepWrap.innerHTML = '<summary>深度层：荣格八维 + 大五人格（均为可选） <span class="badge optional">让"思维方式"与"性情自我调节"两支柱更完整</span></summary>';
+const deepForm = document.createElement('div');
+deepWrap.appendChild(deepForm);
+form.appendChild(deepWrap);
+
+// 经历 / 简历（可选第四源）
+(function renderResume(){
+  const sec = document.createElement('details');
+  sec.innerHTML = '<summary>经历 / 简历粘贴（可选） <span class="badge optional">作为实证融入画像，非必须</span></summary>'
+    + '<div class="cfield" style="margin-top:12px"><label>粘贴你的简历 / 工作经历（可选）</label><textarea id="resume_text" placeholder="例如：3 年 Python 开发，做过推荐系统，熟悉 SQL 与 PyTorch；上一份在 XX 公司任数据分析师……"></textarea></div>'
+    + '<p class="scen-tip">提交后，它会作为「你实际做过什么」的实证，帮我们交叉验证兴趣 / 价值观，并让推荐的证据链更扎实。留空则跳过。</p>';
+  form.appendChild(sec);
+})();
+
+// 自评量表（融合池抽 4）
+FUNCS.forEach(f=>{
+  const pick = shuffle([...Array(f.pool.length).keys()]).slice(0, SELF);
+  const sec = document.createElement('section');
+  sec.className = 'group';
+  sec.innerHTML = `<h2>${f.name}<span class="gscore">小计 <b id="g-${f.key}">0</b>/20</span></h2>`;
+  for(let p=0; p<SELF; p++){
+    const txt = f.pool[pick[p]];
+    const id = `${f.key}-${p}`;
+    state[id] = 0;
+    const q = document.createElement('div');
+    q.className = 'q';
+    let btns = '';
+    for(let v=1; v<=5; v++){ btns += `<button data-id="${id}" data-v="${v}">${v}</button>`; }
+    q.innerHTML = `<div class="no">${p+1}</div><div class="txt">${txt}</div><div class="scale">${btns}</div>`;
+    sec.appendChild(q);
+  }
+  const tools = document.createElement('div');
+  tools.className = 'gtools';
+  tools.innerHTML = `<a data-clear="${f.key}">本组清零</a><a data-mid="${f.key}">整组设为 3</a>`;
+  sec.appendChild(tools);
+  deepForm.appendChild(sec);
+});
+
+// 大五人格（可选，固定 4 题/维，1–5，求和 4–20）
+(function renderBigFive(){
+  const wrap = document.createElement('section');
+  wrap.className = 'group';
+  wrap.innerHTML = '<h2>大五人格（可选，约 5 分钟） <span class="badge optional">让"性情与自我调节"支柱更完整</span></h2><p class="scen-tip">每维 4 题，1–5 自评。高分=该特质越强；N 高分=情绪波动越大（越低越稳定）。与 MBTI 的 E/I 不是同一回事，请分开看。</p>';
+  BIGFIVE_DIMS.forEach(d=>{
+    const sec = document.createElement('section');
+    sec.className = 'group';
+    sec.innerHTML = `<h2>${d.name}<span class="gscore">小计 <b id="bf-${d.key}">0</b>/20</span></h2>`;
+    for(let p=0; p<BSELF; p++){
+      const id = `${d.key}-${p}`;
+      bfstate[id] = 0;
+      const q = document.createElement('div');
+      q.className = 'q';
+      let btns = '';
+      for(let v=1; v<=5; v++){ btns += `<button data-bid="${id}" data-v="${v}">${v}</button>`; }
+      q.innerHTML = `<div class="no">${p+1}</div><div class="txt">${d.pool[p]}</div><div class="scale">${btns}</div>`;
+      sec.appendChild(q);
+    }
+    wrap.appendChild(sec);
+  });
+  deepForm.appendChild(wrap);
+})();
+
+// AI 适应力自评（可选，3 题/维，1–5，求和 3–15）
+(function renderAISub(){
+  const wrap = document.createElement('section');
+  wrap.className = 'group';
+  wrap.innerHTML = '<h2>AI 适应力自评（可选，约 2 分钟） <span class="badge optional">评估"被 AI 替代"暴露度与你的适应力</span></h2><p class="scen-tip">每维 3 题，1–5 自评。三题分别刻画：当前任务可被自动化替代的比例、你学用新工具的意愿、岗位上人际/创意/复杂判断的占比。与 Holland 兴趣码结合，看方向抗替代性。</p>';
+  AISUB_DIMS.forEach(d=>{
+    const sec = document.createElement('section');
+    sec.className = 'group';
+    sec.innerHTML = `<h2>${d.name}<span class="gscore">小计 <b id="ai-${d.key}">0</b>/15</span></h2>`;
+    for(let p=0; p<AISUB_N; p++){
+      const id = `${d.key}-${p}`;
+      asubstate[id] = 0;
+      const q = document.createElement('div');
+      q.className = 'q';
+      let btns = '';
+      for(let v=1; v<=5; v++){ btns += `<button data-aid="${id}" data-v="${v}">${v}</button>`; }
+      q.innerHTML = `<div class="no">${p+1}</div><div class="txt">${d.pool[p]}</div><div class="scale">${btns}</div>`;
+      sec.appendChild(q);
+    }
+    wrap.appendChild(sec);
+  });
+  deepForm.appendChild(wrap);
+})();
+
+// 情景交叉验证题（可选，不评分）：题库 10 抽 5
+const SCENARIOS_POOL = [
+  {q:"一个周末的上午你精力充沛，最可能怎么过？", opts:["列好今日待办清单，逐一完成（偏 Te）","突然想去没去过的地方，立刻出发（偏 Ne/Se）","约朋友喝咖啡，聊聊近况（偏 Fe）","窝在家里研究感兴趣的理论问题（偏 Ti/Ni）"]},
+  {q:"朋友向你求助，你通常会先……", opts:["帮他理清问题、分析利弊后再给建议（偏 Ti）","先共情、安抚情绪，再一起想办法（偏 Fe）","直接上手帮他做点什么或找资源（偏 Se/Te）","和他聊开，帮他看到更大的意义（偏 Ni）"]},
+  {q:"接到一个全新项目，你第一步更可能……", opts:["发散思路，先想出各种可能性和方向（偏 Ne）","查资料、看过往类似项目怎么做的（偏 Si）","先定目标和时间表，再分解任务（偏 Te）","先感受这事对不对味、有没有意义（偏 Fi/Ni）"]},
+  {q:"团队里出现分歧，你的本能反应是……", opts:["推动大家回到事实和逻辑，厘清对错（偏 Ti/Te）","先照顾各方情绪，找个都能接受的折中（偏 Fe）","提议先试一个小方案，用结果说话（偏 Se）","退一步，思考分歧背后的核心矛盾（偏 Ni）"]},
+  {q:"学一样新东西，你更享受……", opts:["搞懂它底层为什么这样运作的原理（偏 Ti）","边用边学，在实操中掌握（偏 Se）","联想它能和哪些已知的东西联系起来（偏 Ne）","对照已有的经验和方法，稳妥地吸收（偏 Si）"]},
+  {q:"你要给一群陌生人做 10 分钟分享，你更可能……", opts:["先理出一条清晰的逻辑主线，按结构讲（偏 Ti/Te）","开场先抛个让人眼前一亮的观点或联想（偏 Ne）","多讲点大家有共鸣的故事，照顾现场气氛（偏 Fe）","带个实物或演示，让大家直接看到、摸到（偏 Se）"]},
+  {q:"买了一件需要组装的东西，你更……", opts:["先读说明书、按步骤来（偏 Si/Te）","先看整体结构，想清楚原理再动手（偏 Ti）","直接拆开边试边装，装错再调（偏 Se）","想到“还能怎么改装得更有意思”（偏 Ne）"]},
+  {q:"年终复盘，你更在意……", opts:["今年做成了哪些事、数据怎么样（偏 Te）","这一年的经历让我对“自己到底要什么”更清楚了没（偏 Fi/Ni）","和身边人的关系、相处是否更舒服了（偏 Fe）","尝试了哪些新东西、见了什么新世面（偏 Ne/Se）"]},
+  {q:"朋友陷入低谷找你，你更先……", opts:["帮他把处境拆开、看清楚问题在哪（偏 Ti）","陪着他，先接住他的情绪（偏 Fe）","拉他出去走走、做点具体的事转移注意力（偏 Se）","和他聊“这事也许在指向什么更大的课题”（偏 Ni）"]},
+  {q:"面对一个我不懂的领域，我更……", opts:["找权威资料和方法，照着学（偏 Si/Te）","先建立自己的理解和框架，再补细节（偏 Ti/Ni）","直接找相关的人聊、在交流里拼图（偏 Fe/Ne）","先动手试几个小例子，从体验里入门（偏 Se）"]}
+];
+const scenState = {};
+const scenOpts = [];
+(function renderScenarios(){
+  var wrap = document.createElement('section');
+  wrap.className = 'group';
+  wrap.innerHTML = '<h2>情景交叉验证（可选，不评分）</h2><p class="scen-tip">凭直觉选，用于和上面的量表交叉对照。每次从题库随机抽 5 题，可跳过。</p>';
+  const picks = shuffle([...Array(SCENARIOS_POOL.length).keys()]).slice(0, POOL_SIZES.scenarioDraw);
+  picks.forEach(function(idx, qi){
+    var s = SCENARIOS_POOL[idx];
+    var id = 'SC' + qi;
+    scenState[qi] = '';
+    scenOpts[qi] = s.opts;
+    var qd = document.createElement('div');
+    qd.className = 'q';
+    var letters = ['A','B','C','D'];
+    var radios = '';
+    s.opts.forEach(function(opt, oi){
+      radios += '<label class="scen-label"><input type="radio" name="' + id + '" value="' + letters[oi] + '"> ' + letters[oi] + '. ' + opt + '</label>';
+    });
+    qd.innerHTML = '<div class="no">' + (qi+1) + '</div><div class="txt"><b>' + s.q + '</b><br>' + radios + '</div>';
+    wrap.appendChild(qd);
+  });
+  deepForm.appendChild(wrap);
+})();
+
+// 二选一优先级题（可选，不评分）：8 组每组 3 对候选，每次抽 1 对
+const PRIORITY_GROUPS = [
+  {g:"G1", pairs:[
+    {q:"遇到复杂问题，你更可能", a:"先独自把原理想透再动手（偏 Ti）", b:"先拉资源、定方案推进（偏 Te）"},
+    {q:"表达观点时，你更", a:"追求逻辑严密、无懈可击（偏 Ti）", b:"追求说清楚、能推动落地（偏 Te）"},
+    {q:"接到一个棘手任务，你更先", a:"把问题拆清楚、搞懂原理（偏 Ti）", b:"拉人拉资源、定个执行节奏（偏 Te）"}
+  ]},
+  {g:"G2", pairs:[
+    {q:"想到未来，你更", a:"看到一条清晰的长期主线（偏 Ni）", b:"冒出很多可能的方向（偏 Ne）"},
+    {q:"理解一件事，你更", a:"想抓住它的本质与意义（偏 Ni）", b:"想连接它和更多事物的关系（偏 Ne）"},
+    {q:"向别人介绍一个想法，你更", a:"先讲它背后的核心判断与意义（偏 Ni）", b:"先抛几个有意思的角度和联想（偏 Ne）"}
+  ]},
+  {g:"G3", pairs:[
+    {q:"做选择时，你更信", a:"我内心的价值判断是否舒服（偏 Fi）", b:"这样做对大家是否合适（偏 Fe）"},
+    {q:"被人误解，你更", a:"守住自己的立场，不在意是否被理解（偏 Fi）", b:"先缓和关系，怕伤了感情（偏 Fe）"},
+    {q:"在一段关系里受了委屈，你更", a:"自己消化、守住底线，不轻易示弱（偏 Fi）", b:"找人聊聊、先把关系缓和下来（偏 Fe）"}
+  ]},
+  {g:"G4", pairs:[
+    {q:"周末放松，你更", a:"按熟悉的节奏安稳地过（偏 Si）", b:"抓住当下，想去哪去哪（偏 Se）"},
+    {q:"学新东西，你更", a:"对照已有经验稳妥吸收（偏 Si）", b:"边用边学、在实操里掌握（偏 Se）"},
+    {q:"去旅行，你更", a:"习惯先做熟路线、留好备用方案（偏 Si）", b:"到了再说，随现场感觉走（偏 Se）"}
+  ]},
+  {g:"G5", pairs:[
+    {q:"判断一件事该不该做，你更看", a:"逻辑上是否自洽（偏 Ti）", b:"内心是否真的认同（偏 Fi）"},
+    {q:"被说服，你更因为", a:"对方论证严密（偏 Ti）", b:"对方戳中了你的价值观（偏 Fi）"},
+    {q:"拒绝一件事，你更因为", a:"它在逻辑上站不住（偏 Ti）", b:"它让我内心反感、违背价值观（偏 Fi）"}
+  ]},
+  {g:"G6", pairs:[
+    {q:"团队有冲突，你更先", a:"厘清事实、推进解决（偏 Te）", b:"照顾情绪、缓和关系（偏 Fe）"},
+    {q:"评价成效，你更看", a:"目标有没有达成（偏 Te）", b:"大家舒不舒服、关系好不好（偏 Fe）"},
+    {q:"带一个小团队，你更在意", a:"任务有没有按时、按质交付（偏 Te）", b:"大家状态好不好、氛围顺不顺（偏 Fe）"}
+  ]},
+  {g:"G7", pairs:[
+    {q:"做重大决定，你更依据", a:"对长远趋势的直觉（偏 Ni）", b:"过往可靠的经验（偏 Si）"},
+    {q:"面对变化，你更", a:"从新趋势里找方向（偏 Ni）", b:"用老方法稳住阵脚（偏 Si）"},
+    {q:"面对一个长期目标，你更靠", a:"对大势的预判来校准方向（偏 Ni）", b:"过往走过的经验来稳扎稳打（偏 Si）"}
+  ]},
+  {g:"G8", pairs:[
+    {q:"遇到新机会，你更", a:"脑中立刻冒出各种关联和可能（偏 Ne）", b:"直接去试一把再说（偏 Se）"},
+    {q:"你更享受", a:"头脑里想法碰撞的兴奋（偏 Ne）", b:"亲手做出东西的踏实（偏 Se）"},
+    {q:"看到一个新鲜事物，你更", a:"马上联想它能和什么结合、生出什么新点子（偏 Ne）", b:"直接上手玩、先感受它好不好用（偏 Se）"}
+  ]}
+];
+const prioState = {};
+(function renderPriority(){
+  var wrap = document.createElement('section');
+  wrap.className = 'group';
+  wrap.innerHTML = '<h2>二选一优先级题（可选，不评分）</h2><p class="scen-tip">凭直觉选你更倾向的一项，用于和量表交叉验证。每次从每组题库随机抽 1 题，可跳过。</p>';
+  PRIORITY_GROUPS.forEach(function(grp, gi){
+    var picks = shuffle([...Array(grp.pairs.length).keys()]).slice(0, POOL_SIZES.priorityDraw);
+    picks.forEach(function(pi){
+      var p = grp.pairs[pi];
+      var id = 'P' + gi;
+      prioState[gi] = '';
+      var qd = document.createElement('div');
+      qd.className = 'q';
+      var radios = '<label class="scen-label"><input type="radio" name="' + id + '" value="A"> A. ' + p.a + '</label>'
+                 + '<label class="scen-label"><input type="radio" name="' + id + '" value="B"> B. ' + p.b + '</label>';
+      qd.innerHTML = '<div class="no">' + (gi+1) + '</div><div class="txt"><b>[' + grp.g + '] ' + p.q + '</b><br>' + radios + '</div>';
+      wrap.appendChild(qd);
+    });
+  });
+  deepForm.appendChild(wrap);
+})();
+
+// ---------- 事件 ----------
+form.addEventListener('click', e=>{
+  const hb = e.target.closest('button[data-hid]');
+  if(hb){
+    const id = hb.dataset.hid, v = +hb.dataset.v;
+    hstate[id] = (hstate[id] === v) ? 0 : v;
+    hb.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on', +x.dataset.v === hstate[id]));
+    refresh(); return;
+  }
+  const b = e.target.closest('button[data-id]');
+  if(b){
+    const id = b.dataset.id, v = +b.dataset.v;
+    state[id] = (state[id] === v) ? 0 : v;
+    const wrap = b.parentElement;
+    wrap.querySelectorAll('button').forEach(x=>x.classList.toggle('on', +x.dataset.v === state[id]));
+    refresh();
+    return;
+  }
+  const bf = e.target.closest('button[data-bid]');
+  if(bf){
+    const id = bf.dataset.bid, v = +bf.dataset.v;
+    bfstate[id] = (bfstate[id] === v) ? 0 : v;
+    const wrap = bf.parentElement;
+    wrap.querySelectorAll('button').forEach(x=>x.classList.toggle('on', +x.dataset.v === bfstate[id]));
+    refresh();
+    return;
+  }
+  const ab = e.target.closest('button[data-aid]');
+  if(ab){
+    const id = ab.dataset.aid, v = +ab.dataset.v;
+    asubstate[id] = (asubstate[id] === v) ? 0 : v;
+    const wrap = ab.parentElement;
+    wrap.querySelectorAll('button').forEach(x=>x.classList.toggle('on', +x.dataset.v === asubstate[id]));
+    refresh();
+    return;
+  }
+  const cl = e.target.closest('a[data-clear]');
+  if(cl){
+    const k = cl.dataset.clear;
+    for(let p=0; p<SELF; p++) state[`${k}-${p}`] = 0;
+    refresh(k); return;
+  }
+  const md = e.target.closest('a[data-mid]');
+  if(md){
+    const k = md.dataset.mid;
+    for(let p=0; p<SELF; p++) state[`${k}-${p}`] = 3;
+    refresh(k); return;
+  }
+});
+
+form.addEventListener('change', e=>{
+  const sel = e.target.closest('select[data-vi]');
+  if(sel){ refresh(); return; }
+  const r = e.target.closest('input[type=radio]');
+  if(r){
+    if(r.name.indexOf('SC') === 0){
+      const qi = parseInt(r.name.replace('SC',''), 10);
+      const oi = ['A','B','C','D'].indexOf(r.value);
+      scenState[qi] = { letter: r.value, text: scenOpts[qi][oi] };
+    } else if(r.name.indexOf('P') === 0){
+      const gi = +r.name.slice(1);
+      prioState[gi] = r.value;
+    }
+    refresh();
+    return;
+  }
+});
+
+function refresh(highlightKey){
+  // Holland
+  const hsums = {}; let hAnswered = 0, hTotal = 0;
+  HOLLAND_DIMS.forEach(d=>{
+    let sum = 0;
+    for(let p=0; p<HSELF; p++){ const v = hstate[d.key+'_'+p] || 0; sum += v; if(v>0) hAnswered++; }
+    hTotal += HSELF; hsums[d.key] = sum;
+    const g = document.getElementById('g-'+d.key); if(g) g.textContent = sum;
+  });
+  const gH = document.getElementById('g-H'); if(gH) gH.textContent = hAnswered>0 ? Object.values(hsums).reduce((a,b)=>a+b,0) : 0;
+  // Values
+  const valRanks = [];
+  document.querySelectorAll('select[data-vi]').forEach(sel=>{
+    if(sel.value) valRanks.push({ i:+sel.dataset.vi, r:+sel.value, name:VALUES[+sel.dataset.vi] });
+  });
+  valRanks.sort((a,b)=>a.r-b.r);
+  const valTop5 = valRanks.slice(0,5);
+  // Constraints
+  const cs = {
+    '城市': document.getElementById('c_city').value.trim(),
+    '迁移': document.getElementById('c_move').value,
+    '薪资底线': document.getElementById('c_salary').value.trim(),
+    '风险': document.getElementById('c_risk').value,
+    '时间窗': document.getElementById('c_window').value,
+    '投入': document.getElementById('c_invest').value,
+    '家庭': document.getElementById('c_family').value.trim(),
+    '红线': document.getElementById('c_redline').value.trim()
+  };
+  const cFilled = ['城市','迁移','薪资底线','风险'].filter(k=>cs[k]).length;
+  // Jung
+  let jAnswered = 0;
+  const jsums = {};
+  FUNCS.forEach(f=>{
+    let sum = 0;
+    for(let p=0; p<SELF; p++){ const v = state[`${f.key}-${p}`] || 0; sum += v; if(v>0) jAnswered++; }
+    jsums[f.key] = sum;
+    const g = document.getElementById('g-'+f.key); if(g) g.textContent = sum;
+  });
+  // Big Five (optional)
+  let bfAnswered = 0;
+  const bfsums = {};
+  BIGFIVE_DIMS.forEach(d=>{
+    let sum = 0;
+    for(let p=0; p<BSELF; p++){ const v = bfstate[d.key+'-'+p] || 0; sum += v; if(v>0) bfAnswered++; }
+    bfsums[d.key] = sum;
+    const g = document.getElementById('bf-'+d.key); if(g) g.textContent = sum;
+  });
+
+  // AI 适应力自评 (optional)
+  let asubAnswered = 0;
+  const asubsums = {};
+  AISUB_DIMS.forEach(d=>{
+    let sum = 0;
+    for(let p=0; p<AISUB_N; p++){ const v = asubstate[d.key+'-'+p] || 0; sum += v; if(v>0) asubAnswered++; }
+    asubsums[d.key] = sum;
+    const g = document.getElementById('ai-'+d.key); if(g) g.textContent = sum;
+  });
+
+  // core done?
+  const coreDone = (hAnswered === HOLLAND_DIMS.length*HSELF) && (valTop5.length >= 3) && (cFilled >= 4);
+  // progress bar: core layer weighting
+  const corePart = (hAnswered/(HOLLAND_DIMS.length*HSELF))*0.6 + (valTop5.length>=3?0.2:0) + (cFilled>=4?0.2:0);
+  document.getElementById('bar').style.width = (corePart*100)+'%';
+  let pmsg = '核心层：兴趣 ' + hAnswered + '/' + (HOLLAND_DIMS.length*HSELF)
+    + ' · 价值观已排 ' + valTop5.length + ' 项 · 约束 ' + cFilled + '/4';
+  if(!coreDone) pmsg += '（完成核心层才能复制）';
+  else {
+    let extra = '';
+    if(jAnswered>0) extra += ' · 八维'+jAnswered+'/'+TOTAL_JUNG;
+    if(bfAnswered>0) extra += ' · 大五'+bfAnswered+'/20';
+    if(asubAnswered>0) extra += ' · AI适应力'+asubAnswered+'/9';
+    pmsg += (extra ? ' · 深度层已答'+extra : ' · 深度层可选未做');
+  }
+  document.getElementById('pcount').textContent = pmsg;
+
+  // sums grid (Holland 6 dims)
+  const sg = document.getElementById('sums');
+  sg.innerHTML = HOLLAND_DIMS.map(d=>`<div>${d.key}<b>${hsums[d.key]}</b></div>`).join('');
+
+  // output strings
+  const hollandLine = 'HOLLAND: ' + HOLLAND_DIMS.map(d=>d.key+':'+hsums[d.key]).join(';');
+  const valueLine = 'VALUES: ' + valTop5.map(x=>(x.r)+'='+x.name).join(';');
+  const cFilledPairs = Object.keys(cs).filter(k=>cs[k]).map(k=>k+'='+cs[k]);
+  const constraintLine = 'CONSTRAINTS: ' + (cFilledPairs.length ? cFilledPairs.join(';') : '（未填）');
+  // Jung optional
+  let jungLine = '';
+  if(jAnswered > 0){
+    jungLine = 'JUNG: ' + FUNCS.map(f=>{
+      const vals = []; for(let p=0; p<SELF; p++) vals.push(state[`${f.key}-${p}`] || 0);
+      return `${f.key}:${vals.join(',')}`;
+    }).join('; ');
+  }
+  // scenario + prio
+  const scenAns = [];
+  scenOpts.forEach(function(opts, qi){ const v = scenState[qi]; if(v && v.letter) scenAns.push('Q'+(qi+1)+'='+v.letter+'｜'+v.text); });
+  const prioAns = [];
+  PRIORITY_GROUPS.forEach(function(grp, gi){ const L = prioState[gi]; if(L) prioAns.push('P'+(gi+1)+'='+L); });
+
+  let bfLine = '';
+  if(bfAnswered > 0){ bfLine = 'BIGFIVE: ' + BIGFIVE_DIMS.map(d=>d.key+':'+bfsums[d.key]).join(';'); }
+  let aisubLine = '';
+  if(asubAnswered > 0){ aisubLine = 'AISUB: ' + AISUB_DIMS.map(d=>d.key+':'+asubsums[d.key]).join(';'); }
+  const blocks = [hollandLine, valueLine, constraintLine];
+  if(jungLine) blocks.push(jungLine);
+  if(bfLine) blocks.push(bfLine);
+  if(aisubLine) blocks.push(aisubLine);
+  const marketOn = (document.getElementById('c_market') && document.getElementById('c_market').value === '\u662f');
+  if(marketOn) blocks.push('MARKET: \u662f');
+  if(prioAns.length) blocks.push('PRIO: ' + prioAns.join('; '));
+  if(scenAns.length) blocks.push('SCENARIO: ' + scenAns.join('; '));
+  const resumeEl = document.getElementById('resume_text');
+  const resumeVal = resumeEl ? resumeEl.value.trim() : '';
+  if(resumeVal){ blocks.push('RESUME: ' + resumeVal); }
+  const out = blocks.join('\n');
+
+  // Holland 代码（前 3 高维）供报告导出
+  const hCode = HOLLAND_DIMS.slice().sort((a,b)=>hsums[b.key]-hsums[a.key]).slice(0,3).map(d=>d.key).join('');
+  AGG = { holland: hsums, hollandCode: hCode, values: valTop5, constraints: cs,
+          jung: jsums, jungAnswered: jAnswered, bigfive: bfsums, bfAnswered: bfAnswered,
+          aisub: asubsums, asubAnswered: asubAnswered, marketOn: marketOn, raw: out, coreDone: coreDone, resumeText: (document.getElementById('resume_text') ? document.getElementById('resume_text').value.trim() : '') };
+
+  const ta = document.getElementById('out');
+  ta.value = out;
+  document.getElementById('copy').disabled = !coreDone;
+  document.getElementById('hint').textContent = coreDone
+    ? (jAnswered>0 ? '核心层 + 深度层已完整，复制后贴回对话即可。' : '核心层已完整，复制后贴回对话即可（深度层可后补）。')
+    : '完成核心层（兴趣 24 题 + 价值观排序 + 约束 4 项）才能复制。深度层（荣格八维）可选。';
+}
+
+document.getElementById('copy').addEventListener('click', ()=>{
+  const ta = document.getElementById('out');
+  ta.select();
+  const done = ()=>{ const h=document.getElementById('hint'); h.style.color='var(--ok)'; h.textContent='已复制到剪贴板，去对话里粘贴吧！'; setTimeout(()=>h.style.color='',2000); };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value).then(done, ()=>{document.execCommand('copy'); done();}); }
+  else { document.execCommand('copy'); done(); }
+});
+
+document.getElementById('reset').addEventListener('click', ()=>{
+  Object.keys(hstate).forEach(k=> hstate[k]=0);
+  Object.keys(state).forEach(k=> state[k]=0);
+  Object.keys(bfstate).forEach(k=> bfstate[k]=0);
+  Object.keys(asubstate).forEach(k=> asubstate[k]=0);
+  document.querySelectorAll('.scale button').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('select[data-vi]').forEach(s=> s.value='');
+  ['c_city','c_move','c_salary','c_risk','c_window','c_invest','c_family','c_redline'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const cm=document.getElementById('c_market'); if(cm) cm.value='\u5426';
+  const rt=document.getElementById('resume_text'); if(rt) rt.value='';
+  refresh();
+});
+
+function syncAll(){
+  document.querySelectorAll('.scale button').forEach(btn=>{
+    const hid = btn.dataset.hid, id = btn.dataset.id, bid = btn.dataset.bid, aid = btn.dataset.aid;
+    if(hid){ const v=+btn.dataset.v; btn.classList.toggle('on', hstate[hid]===v); }
+    if(id){ const v=+btn.dataset.v; btn.classList.toggle('on', state[id]===v); }
+    if(bid){ const v=+btn.dataset.v; btn.classList.toggle('on', bfstate[bid]===v); }
+    if(aid){ const v=+btn.dataset.v; btn.classList.toggle('on', asubstate[aid]===v); }
+  });
+}
+
+document.getElementById('rand').addEventListener('click', ()=>{
+  HOLLAND_DIMS.forEach(d=>{ for(let p=0; p<HSELF; p++) hstate[d.key+'_'+p] = 1+Math.floor(Math.random()*5); });
+  FUNCS.forEach(f=>{ for(let p=0; p<SELF; p++) state[`${f.key}-${p}`] = 1+Math.floor(Math.random()*5); });
+  BIGFIVE_DIMS.forEach(d=>{ for(let p=0; p<BSELF; p++) bfstate[d.key+'-'+p] = 1+Math.floor(Math.random()*5); });
+  AISUB_DIMS.forEach(d=>{ for(let p=0; p<AISUB_N; p++) asubstate[d.key+'-'+p] = 1+Math.floor(Math.random()*5); });
+  const sels = document.querySelectorAll('select[data-vi]');
+  const ord = shuffle([...Array(9).keys()]);
+  sels.forEach((s,i)=> s.value = String(ord[i]+1));
+  document.getElementById('c_city').value='广州';
+  document.getElementById('c_move').value='可有条件迁移';
+  document.getElementById('c_salary').value='15000';
+  document.getElementById('c_risk').value='进取';
+  document.getElementById('c_window').value='半年内';
+  document.getElementById('c_invest').value='愿意系统学习/考证';
+  syncAll(); refresh();
+});
+
+document.getElementById('sample').addEventListener('click', ()=>{
+  // 示例：研究型 I 高 + 企业型 E 次高 + 价值观[成长/自主/影响] + 约束广州进取
+  hstate['I_0']=5;hstate['I_1']=5;hstate['I_2']=4;hstate['I_3']=5;
+  hstate['E_0']=4;hstate['E_1']=4;hstate['E_2']=5;hstate['E_3']=4;
+  hstate['A_0']=3;hstate['A_1']=3;hstate['A_2']=2;hstate['A_3']=3;
+  hstate['S_0']=3;hstate['S_1']=2;hstate['S_2']=3;hstate['S_3']=2;
+  hstate['R_0']=2;hstate['R_1']=2;hstate['R_2']=2;hstate['R_3']=1;
+  hstate['C_0']=3;hstate['C_1']=3;hstate['C_2']=2;hstate['C_3']=3;
+  // 显式排名：成长(4)=1, 自主(0)=2, 影响(1)=3, 稳定(3)=4, 经济(2)=5, 其余 6–9
+  const explicit = {0:2,1:3,2:5,3:4,4:1,5:6,6:7,7:8,8:9};
+  document.querySelectorAll('select[data-vi]').forEach(s=>{ s.value = String(explicit[+s.dataset.vi]); });
+  document.getElementById('c_city').value='广州';
+  document.getElementById('c_move').value='可有条件迁移';
+  document.getElementById('c_salary').value='15000';
+  document.getElementById('c_risk').value='进取';
+  document.getElementById('c_window').value='半年内';
+  document.getElementById('c_invest').value='愿意系统学习/考证';
+  FUNCS.forEach(f=>{ const arr = SAMPLE[f.key] || Array(SELF).fill(3); for(let p=0;p<SELF;p++) state[`${f.key}-${p}`]=arr[p]; });
+  const BFSAMPLE = {O:[5,5,4,5], C:[5,5,4,5], E:[2,2,2,2], A:[3,3,3,3], N:[2,2,2,2]};
+  BIGFIVE_DIMS.forEach(d=>{ const arr = BFSAMPLE[d.key]; for(let p=0;p<BSELF;p++) bfstate[d.key+'-'+p]=arr[p]; });
+  const AISUBSAMPLE = {暴露度:[3,4,2], 适应力:[5,4,5], 人力资本:[4,3,5]};
+  AISUB_DIMS.forEach(d=>{ const arr = AISUBSAMPLE[d.key]; for(let p=0;p<AISUB_N;p++) asubstate[d.key+'-'+p]=arr[p]; });
+  syncAll(); refresh();
+  const h=document.getElementById('hint'); h.style.color='var(--brand)';
+  h.textContent='已填入示例（兴趣 I/E 高 · 价值观 成长/自主/影响 · 约束 广州·进取）。深度层已填示例(Ni主导 · 大五 O/C高、E/N低)，可直接复制测试。';
+});
+
+document.getElementById('export').addEventListener('click', ()=>{
+  const a = AGG;
+  if(!a || !a.raw || !a.coreDone){ alert('先完成核心层，我才能帮你导出报告～'); return; }
+  const html = buildReportHTML(a);
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+  link.download = '职业测评自报告.html'; link.click(); URL.revokeObjectURL(link.href);
+  const h=document.getElementById('hint'); h.style.color='var(--ok)'; h.textContent='已导出 HTML 自报告（可离线打开 / 分享）。';
+});
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function hbar(v, max){ const pct = Math.max(2, Math.min(100, Math.round(v/max*100))); return '<div class="rbar"><span style="width:'+pct+'%"></span></div>'; }
+function buildReportHTML(a){
+  const now = new Date().toLocaleString('zh-CN');
+  const resumeNote = a.resumeText ? '<p class="note">已提供经历 / 简历（'+a.resumeText.length+' 字），将在对话中作为实证融入画像。</p>' : '';
+  const hRows = HOLLAND_DIMS.map(d=>{ const v=a.holland[d.key]||0; return '<tr><td>'+d.key+' · '+esc(d.name)+'</td><td>'+v+'/20</td><td>'+hbar(v,20)+'</td></tr>'; }).join('');
+  const vRows = a.values.length ? a.values.map(x=>'<li>'+x.r+'. '+esc(x.name)+'</li>').join('') : '<li>（未排序）</li>';
+  const cRows = Object.keys(a.constraints).filter(k=>a.constraints[k]).map(k=>'<tr><td>'+esc(k)+'</td><td>'+esc(a.constraints[k])+'</td></tr>').join('');
+  let depth = '';
+  if(a.jungAnswered>0){
+    const order = FUNCS.slice().sort((x,y)=>(a.jung[y.key]||0)-(a.jung[x.key]||0));
+    const rows = order.map(f=>'<tr><td>'+f.key+'</td><td>'+esc(f.name)+'</td><td>'+(a.jung[f.key]||0)+'/20</td><td>'+hbar(a.jung[f.key]||0,20)+'</td></tr>').join('');
+    depth += '<h3>深度层 · 荣格八维（'+(a.jungAnswered)+'/'+TOTAL_JUNG+'）</h3><table class="dt">'+rows+'</table>';
+  }
+  if(a.bfAnswered>0){
+    const rows = BIGFIVE_DIMS.map(d=>'<tr><td>'+d.key+'</td><td>'+esc(d.name)+'</td><td>'+(a.bigfive[d.key]||0)+'/20</td><td>'+hbar(a.bigfive[d.key]||0,20)+'</td></tr>').join('');
+    depth += '<h3>深度层 · 大五人格（'+(a.bfAnswered)+'/20）</h3><table class="dt">'+rows+'</table>';
+  }
+  if(a.asubAnswered>0){
+    const rows = AISUB_DIMS.map(d=>'<tr><td>'+esc(d.name)+'</td><td>'+(a.aisub[d.key]||0)+'/'+(AISUB_N*5)+'</td><td>'+hbar(a.aisub[d.key]||0,AISUB_N*5)+'</td></tr>').join('');
+    depth += '<h3>深度层 · AI 适应力（'+(a.asubAnswered)+'/9）</h3><table class="dt">'+rows+'</table>';
+  }
+  if(a.marketOn){ depth += '<p class="note">已开启「实时市场数据」：在对话中联网获取岗位供需 / 薪资趋势。</p>'; }
+  const sec5 = depth ? '五' : '四';
+  return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>职业测评自报告</title><style>'
+    + 'body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;max-width:780px;margin:28px auto;padding:0 18px;color:#1f2933;line-height:1.7}'
+    + 'h1{font-size:23px;border-bottom:3px solid #6c5ce7;padding-bottom:8px;margin-bottom:4px} h2{font-size:17px;margin-top:30px;color:#4834d4} h3{font-size:15px;margin:20px 0 8px;color:#6c5ce7}'
+    + 'table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px} td{border:1px solid #e4e7eb;padding:7px 9px;text-align:left}'
+    + '.rbar{background:#eef0f3;border-radius:6px;height:11px;width:170px;overflow:hidden} .rbar span{display:block;height:100%;background:linear-gradient(90deg,#6c5ce7,#a29bfe)}'
+    + '.raw{background:#f6f7fb;border:1px solid #e4e7eb;border-radius:8px;padding:12px;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all}'
+    + '.code{font-size:22px;font-weight:700;color:#6c5ce7;letter-spacing:3px}'
+    + '.note{font-size:13px;color:#6b7280;background:#fff8e6;border-left:3px solid #f0a020;padding:7px 11px;border-radius:4px}'
+    + '.decl{font-size:13px;color:#4b5563;background:#f3f4ff;border:1px solid #dcdcff;border-radius:8px;padding:12px 15px;margin-top:22px}'
+    + 'ul{margin:6px 0;padding-left:22px} li{margin:3px 0} .meta{color:#6b7280;font-size:13px}</style></head><body>'
+    + '<h1>职业测评自报告</h1>'
+    + '<p class="meta">生成时间：'+esc(now)+'　·　方法：多源三角验证（兴趣 + 价值观 + 约束 + 可选深度层）</p>'
+    + '<h2>一、兴趣剖面 Holland　<span class="code">'+esc(a.hollandCode)+'</span></h2>'
+    + '<table class="dt"><tr><th>维度</th><th>得分</th><th>分布</th></tr>'+hRows+'</table>'
+    + '<h2>二、职业价值观排序（Top '+a.values.length+'）</h2><ol>'+vRows+'</ol>'
+    + '<h2>三、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>'+cRows+'</table>'+resumeNote
+    + (depth ? '<h2>四、深度层（可选）</h2>'+depth : '')
+    + '<h2>'+sec5+'、原始分数串（可贴回对话复核）</h2>'
+    + '<div class="raw">'+esc(a.raw)+'</div>'
+    + '<div class="decl"><b>声明：</b>本结果仅基于你的自评输入，用于辅助自我觉察与探索，不具备临床诊断或招聘决策效力。任何维度分数都不应给一个人“贴标签”——人是动态的，兴趣、能力与适应力都可通过行动改变。重大职业决策请结合自身实情、行业信息与必要时的专业咨询。</div>'
+    + '</body></html>';
+}
+
+refresh();
+</script>
+</body>
+</html>
