@@ -71,7 +71,8 @@
 <body>
 <header>
   <h1>职业测评表单 · 多源三角验证</h1>
-  <p>本表采用<strong>模块化渐进</strong>设计：先完成<strong>核心层</strong>（职业兴趣 + 工作价值观排序 + 现实约束，约 8–10 分钟），即可生成有参考性的三角验证画像；<strong>深度层</strong>（荣格八维 + 大五人格，均为可选）点开可让"思维方式"与"性情自我调节"两支柱更完整。所有题目无标准答案，照实选最准。</p>
+  <p>欢迎来做一次<strong>职业自我探索</strong>。本表采用<strong>模块化渐进</strong>设计：先完成<strong>核心层</strong>（职业兴趣 + 工作价值观排序 + 现实约束，约 8–10 分钟），即可生成有参考性的三角验证画像；<strong>深度层</strong>（荣格八维 + 大五人格 + AI 适应力，均为可选）点开可让"思维方式""性情""抗替代性"几根支柱更完整。所有题目无标准答案，照实选最准。</p>
+  <p style="margin:8px 0 0;padding:8px 12px;background:#f3f4ff;border-left:3px solid #6c5ce7;border-radius:6px;color:#4b5563;font-size:13px">这不是算命，也不是给你的判决书——它是一份帮你梳理思路的<strong>探索线索</strong>。人是动态的：兴趣、能力与适应力，都能通过行动慢慢改变。测完把分数串贴回对话，规划师会结合你的经历，给出可复核的推荐与下一步。</p>
   <div class="legend">
     <span><b>1</b> 非常不符合</span><span><b>2</b> 不太符合</span><span><b>3</b> 中立</span>
     <span><b>4</b> 较符合</span><span><b>5</b> 非常符合</span>
@@ -390,6 +391,21 @@ form.appendChild(deepWrap);
   sec.innerHTML = '<summary>经历 / 简历粘贴（可选） <span class="badge optional">作为实证融入画像，非必须</span></summary>'
     + '<div class="cfield" style="margin-top:12px"><label>粘贴你的简历 / 工作经历（可选）</label><textarea id="resume_text" placeholder="例如：3 年 Python 开发，做过推荐系统，熟悉 SQL 与 PyTorch；上一份在 XX 公司任数据分析师……"></textarea></div>'
     + '<p class="scen-tip">提交后，它会作为「你实际做过什么」的实证，帮我们交叉验证兴趣 / 价值观，并让推荐的证据链更扎实。留空则跳过。</p>';
+  form.appendChild(sec);
+})();
+
+// 当前职业阶段（可选，用于校准报告语气）
+(function renderStage(){
+  const sec = document.createElement('details');
+  sec.innerHTML = '<summary>当前职业阶段（可选） <span class="badge optional">用于校准报告语气</span></summary>'
+    + '<p class="scen-tip">选一个最贴近你当下状态的阶段，规划师会据此调整报告的语气与下一步建议的侧重。留空则使用通用语气。</p>'
+    + '<div id="stage-radios" style="margin-top:8px">'
+    + '<label class="scen-label"><input type="radio" name="stage" value="大学迷茫"> 大学迷茫（在校 / 求职探索期）</label>'
+    + '<label class="scen-label"><input type="radio" name="stage" value="职场初期"> 职场初期（工作 0–3 年，筑基）</label>'
+    + '<label class="scen-label"><input type="radio" name="stage" value="发展瓶颈"> 发展瓶颈（数年经验遇天花板）</label>'
+    + '<label class="scen-label"><input type="radio" name="stage" value="转型期"> 转型期（跨行业 / 跨职能）</label>'
+    + '<label class="scen-label"><input type="radio" name="stage" value="重返职场"> 重返职场（间隔后回归）</label>'
+    + '</div>';
   form.appendChild(sec);
 })();
 
@@ -746,6 +762,9 @@ function refresh(highlightKey){
   if(marketOn) blocks.push('MARKET: \u662f');
   if(prioAns.length) blocks.push('PRIO: ' + prioAns.join('; '));
   if(scenAns.length) blocks.push('SCENARIO: ' + scenAns.join('; '));
+  const stageEl = document.querySelector('input[name="stage"]:checked');
+  const stageVal = stageEl ? stageEl.value : '';
+  if(stageVal){ blocks.push('STAGE: ' + stageVal); }
   const resumeEl = document.getElementById('resume_text');
   const resumeVal = resumeEl ? resumeEl.value.trim() : '';
   if(resumeVal){ blocks.push('RESUME: ' + resumeVal); }
@@ -755,7 +774,7 @@ function refresh(highlightKey){
   const hCode = HOLLAND_DIMS.slice().sort((a,b)=>hsums[b.key]-hsums[a.key]).slice(0,3).map(d=>d.key).join('');
   AGG = { holland: hsums, hollandCode: hCode, values: valTop5, constraints: cs,
           jung: jsums, jungAnswered: jAnswered, bigfive: bfsums, bfAnswered: bfAnswered,
-          aisub: asubsums, asubAnswered: asubAnswered, marketOn: marketOn, raw: out, coreDone: coreDone, resumeText: (document.getElementById('resume_text') ? document.getElementById('resume_text').value.trim() : '') };
+          aisub: asubsums, asubAnswered: asubAnswered, marketOn: marketOn, raw: out, coreDone: coreDone, resumeText: (document.getElementById('resume_text') ? document.getElementById('resume_text').value.trim() : ''), stage: stageVal };
 
   const ta = document.getElementById('out');
   ta.value = out;
@@ -785,6 +804,7 @@ document.getElementById('reset').addEventListener('click', ()=>{
   });
   const cm=document.getElementById('c_market'); if(cm) cm.value='\u5426';
   const rt=document.getElementById('resume_text'); if(rt) rt.value='';
+  document.querySelectorAll('input[name="stage"]').forEach(r=>r.checked=false);
   refresh();
 });
 
@@ -857,6 +877,7 @@ function hbar(v, max){ const pct = Math.max(2, Math.min(100, Math.round(v/max*10
 function buildReportHTML(a){
   const now = new Date().toLocaleString('zh-CN');
   const resumeNote = a.resumeText ? '<p class="note">已提供经历 / 简历（'+a.resumeText.length+' 字），将在对话中作为实证融入画像。</p>' : '';
+  const stageNote = a.stage ? '<p class="note">当前阶段：'+esc(a.stage)+'（报告语气已据此校准）。</p>' : '';
   const hRows = HOLLAND_DIMS.map(d=>{ const v=a.holland[d.key]||0; return '<tr><td>'+d.key+' · '+esc(d.name)+'</td><td>'+v+'/20</td><td>'+hbar(v,20)+'</td></tr>'; }).join('');
   const vRows = a.values.length ? a.values.map(x=>'<li>'+x.r+'. '+esc(x.name)+'</li>').join('') : '<li>（未排序）</li>';
   const cRows = Object.keys(a.constraints).filter(k=>a.constraints[k]).map(k=>'<tr><td>'+esc(k)+'</td><td>'+esc(a.constraints[k])+'</td></tr>').join('');
@@ -891,7 +912,7 @@ function buildReportHTML(a){
     + '<h2>一、兴趣剖面 Holland　<span class="code">'+esc(a.hollandCode)+'</span></h2>'
     + '<table class="dt"><tr><th>维度</th><th>得分</th><th>分布</th></tr>'+hRows+'</table>'
     + '<h2>二、职业价值观排序（Top '+a.values.length+'）</h2><ol>'+vRows+'</ol>'
-    + '<h2>三、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>'+cRows+'</table>'+resumeNote
+    + '<h2>三、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>'+cRows+'</table>'+resumeNote+stageNote
     + (depth ? '<h2>四、深度层（可选）</h2>'+depth : '')
     + '<h2>'+sec5+'、原始分数串（可贴回对话复核）</h2>'
     + '<div class="raw">'+esc(a.raw)+'</div>'
