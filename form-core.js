@@ -177,11 +177,29 @@
       '<div class="rescard"><span class="rd">' + c.dim + '</span>' + esc(c.t) +
       (c.u ? ' <a href="' + esc(c.u) + '" target="_blank" rel="noopener">↗</a>' : '') + '</div>').join('') + '</div>' : '';
     const svgSec = '<div class="viz">' + hollandHexagonSVG(a.holland || {}) + (a.bfAnswered > 0 ? bigfiveRadarSVG(a.bigfive || {}) : '') + '</div>';
-    const sec5 = depth ? '五' : '四';
+    // 封面 + 分节导航锚点（按实际渲染顺序构建目录）
+    const code = a.hollandCode || (a.holland ? hollandCode(a.holland) : '');
+    const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八'];
+    let si = 1;
+    const navItems = [
+      { id: 'sec-interest', label: '兴趣剖面' },
+      { id: 'sec-values', label: '价值观排序' },
+      { id: 'sec-constraints', label: '约束条件' }
+    ];
+    const idDepth = depth ? 'sec-depth' : null;
+    const idRes = resHTML ? 'sec-resources' : null;
+    if (idDepth) navItems.push({ id: idDepth, label: '深度层' });
+    if (idRes) navItems.push({ id: idRes, label: '下一步资源' });
+    navItems.push({ id: 'sec-raw', label: '原始分数串' });
+    navItems.push({ id: 'sec-decl', label: '声明' });
+    const navHTML = '<nav class="report-nav" aria-label="报告目录"><span class="nav-title">目录</span><div class="nav-links">'
+      + navItems.map(it => '<a href="#' + it.id + '">' + it.label + '</a>').join('')
+      + '<a href="#top" class="nav-top">顶部 ↑</a></div></nav>';
     return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>职业测评自报告</title><style>'
       + 'body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;max-width:800px;margin:32px auto;padding:0 20px;color:#1f2933;line-height:1.7;background:#fbfbfd;-webkit-font-smoothing:antialiased}'
+      + 'html{scroll-behavior:smooth}'
       + 'h1{font-size:25px;font-weight:700;letter-spacing:-.01em;border-bottom:3px solid #6c5ce7;padding-bottom:10px;margin:0 0 6px}'
-      + 'h2{font-size:18px;font-weight:600;margin:32px 0 10px;color:#4834d4;padding-left:11px;border-left:4px solid #6c5ce7}'
+      + 'h2{font-size:18px;font-weight:600;margin:32px 0 10px;color:#4834d4;padding-left:11px;border-left:4px solid #6c5ce7;scroll-margin-top:72px}'
       + 'h3{font-size:15px;font-weight:600;margin:22px 0 8px;color:#6c5ce7}'
       + 'table{width:100%;border-collapse:separate;border-spacing:0;margin:10px 0;font-size:14px;background:#fff;border:1px solid #e8eaed;border-radius:10px;overflow:hidden}'
       + 'th{background:#f4f5fb;color:#3d444d;font-weight:600;text-align:left;padding:9px 11px;border-bottom:1px solid #e8eaed}'
@@ -197,24 +215,47 @@
       + '.rescard .rd{display:inline-block;background:#0f6e56;color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;margin-right:7px;font-weight:600}'
       + '.rescard a{color:#0f6e56;font-weight:600}'
       + 'ol{margin:8px 0;padding-left:22px} li{margin:4px 0} ul{margin:6px 0;padding-left:22px} li{margin:3px 0} .meta{color:#6b7280;font-size:13px}'
+      + '.report-cover{position:relative;background:linear-gradient(135deg,#6c5ce7,#4834d4);color:#fff;border-radius:18px;padding:30px 32px;margin:0 0 16px;box-shadow:0 14px 34px rgba(72,52,212,.20);overflow:hidden}'
+      + '.report-cover::after{content:"";position:absolute;right:-46px;top:-46px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.08)}'
+      + '.cover-kicker{font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:.85;margin-bottom:8px}'
+      + '.report-cover h1{color:#fff;border:none;padding:0;margin:0 0 16px;font-size:27px;letter-spacing:-.01em}'
+      + '.cover-code{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}'
+      + '.cover-code-label{font-size:12px;opacity:.85}'
+      + '.cover-code-val{font-size:38px;font-weight:800;letter-spacing:.18em;line-height:1;font-variant-numeric:tabular-nums}'
+      + '.cover-sub{margin:14px 0 0;font-size:13.5px;line-height:1.6;opacity:.92;max-width:48ch}'
+      + '.cover-foot{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:16px;font-size:12.5px}'
+      + '.cover-time{opacity:.85}'
+      + '.cover-local{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.30);border-radius:999px;padding:3px 11px;font-weight:600}'
+      + '.report-nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;background:rgba(251,251,253,.92);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid #eceef2;border-radius:12px;padding:9px 12px;margin:0 0 18px}'
+      + '.nav-title{font-size:12px;font-weight:700;color:#6b7280;letter-spacing:.05em;flex:none}'
+      + '.nav-links{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin}'
+      + '.report-nav a{display:inline-block;white-space:nowrap;text-decoration:none;color:#4b5563;font-size:13px;padding:5px 11px;border-radius:999px;transition:background .18s ease,color .18s ease}'
+      + '.report-nav a:hover{background:#eef0fb;color:#4834d4}'
+      + '.report-nav a.nav-top{margin-left:auto;color:#6c5ce7;font-weight:600}'
       + ':focus-visible{outline:2px solid #6c5ce7;outline-offset:2px}'
       + '.rescard{transition:transform .2s ease,box-shadow .2s ease} .rescard:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(31,158,117,.18)}'
       + '.viz line{stroke-dasharray:240;stroke-dashoffset:240;animation:draw 1s ease forwards} @keyframes draw{to{stroke-dashoffset:0}}'
-      + '@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.viz line{stroke-dashoffset:0}}'
-      + '@media print{body{max-width:none;margin:0;background:#fff}.decl,.note{break-inside:avoid}.viz{break-inside:avoid}}'
-      + '</style></head><body>'
-      + '<h1>职业测评自报告</h1>'
-      + '<p class="meta">生成时间：' + esc(now) + '　·　方法：多源三角验证（兴趣 + 价值观 + 约束 + 可选深度层）</p>'
-      + '<h2>一、兴趣剖面 Holland　<span class="code">' + esc(a.hollandCode) + '</span></h2>'
+      + '@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.viz line{stroke-dashoffset:0}html{scroll-behavior:auto}}'
+      + '@media print{body{max-width:none;margin:0;background:#fff}.decl,.note{break-inside:avoid}.viz{break-inside:avoid}.report-nav{display:none}.report-cover{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none}.cover-sub,.cover-time,.cover-local{color:#fff!important}}'
+      + '</style></head><body id="top">'
+      + '<header class="report-cover">'
+      + '<div class="cover-kicker">职业测评 · 自报告</div>'
+      + '<h1>你的职业画像</h1>'
+      + '<div class="cover-code"><span class="cover-code-label">Holland 兴趣代码</span><span class="cover-code-val">' + esc(code) + '</span></div>'
+      + '<p class="cover-sub">基于多源三角验证（兴趣 + 价值观 + 约束 + 可选深度层）生成，供你与规划师共同探索。这不是算命，而是一份可复核的探索线索。</p>'
+      + '<div class="cover-foot"><span class="cover-time">生成时间：' + esc(now) + '</span><span class="cover-local">🔒 本地生成 · 数据不上传</span></div>'
+      + '</header>'
+      + navHTML
+      + '<h2 id="sec-interest">' + CN[si++] + '、兴趣剖面 Holland　<span class="code">' + esc(code) + '</span></h2>'
       + svgSec
       + '<table class="dt"><tr><th>维度</th><th>得分</th><th>分布</th></tr>' + hRows + '</table>'
-      + '<h2>二、职业价值观排序（Top ' + (a.values ? a.values.length : 0) + '）</h2><ol>' + vRows + '</ol>'
-      + '<h2>三、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>' + cRows + '</table>' + resumeNote + stageNote
-      + (depth ? '<h2>四、深度层（可选）</h2>' + depth : '')
-      + (resHTML ? '<h2>' + (depth ? '五' : '四') + '、下一步资源（按兴趣码）</h2>' + resHTML : '')
-      + '<h2>' + sec5 + '、原始分数串（可贴回对话复核）</h2>'
+      + '<h2 id="sec-values">' + CN[si++] + '、职业价值观排序（Top ' + (a.values ? a.values.length : 0) + '）</h2><ol>' + vRows + '</ol>'
+      + '<h2 id="sec-constraints">' + CN[si++] + '、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>' + cRows + '</table>' + resumeNote + stageNote
+      + (depth ? '<h2 id="' + idDepth + '">' + CN[si++] + '、深度层（可选）</h2>' + depth : '')
+      + (resHTML ? '<h2 id="' + idRes + '">' + CN[si++] + '、下一步资源（按兴趣码）</h2>' + resHTML : '')
+      + '<h2 id="sec-raw">' + CN[si++] + '、原始分数串（可贴回对话复核）</h2>'
       + '<div class="raw">' + esc(a.raw) + '</div>'
-      + '<div class="decl"><b>声明：</b>本结果仅基于你的自评输入，用于辅助自我觉察与探索，不具备临床诊断或招聘决策效力。任何维度分数都不应给一个人"贴标签"——人是动态的，兴趣、能力与适应力都可通过行动改变。重大职业决策请结合自身实情、行业信息与必要时的专业咨询。</div>'
+      + '<div class="decl" id="sec-decl"><b>声明：</b>本结果仅基于你的自评输入，用于辅助自我觉察与探索，不具备临床诊断或招聘决策效力。任何维度分数都不应给一个人"贴标签"——人是动态的，兴趣、能力与适应力都可通过行动改变。重大职业决策请结合自身实情、行业信息与必要时的专业咨询。</div>'
       + '</body></html>';
   }
 
