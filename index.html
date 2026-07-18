@@ -81,7 +81,24 @@
   details>summary{cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;list-style:none}
   details>summary::-webkit-details-marker{display:none}
   details[open]>summary{margin-bottom:16px}
-  @media(max-width:560px){.sums{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.scale button{width:30px;height:30px}header{padding:14px 14px}header h1{font-size:17px}header p{font-size:12px}.legend{font-size:11px;gap:6px}.q .txt{font-size:13px}main{padding:0 10px}.group{padding:12px}.scale{gap:4px}.theme-toggle{padding:5px 10px;font-size:12px}}@media(max-width:380px){.scale button{width:26px;height:26px;font-size:12px}.sums{grid-template-columns:repeat(2,1fr)}.legend span{margin-right:4px}}
+  @media(max-width:560px){.sums{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.scale button{width:30px;height:30px}header{padding:14px 14px}header h1{font-size:17px}header p{font-size:12px}.legend{font-size:11px;gap:6px}.q .txt{font-size:13px}main{padding:0 10px}.group{padding:12px}.scale{gap:4px}.theme-toggle{padding:5px 10px;font-size:12px}}  @media(max-width:380px){.scale button{width:26px;height:26px;font-size:12px}.sums{grid-template-columns:repeat(2,1fr)}.legend span{margin-right:4px}}
+  /* ===== v1.25 premium motion & a11y ===== */
+  html{scroll-behavior:smooth}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+  .progress>i{background:linear-gradient(90deg,var(--brand),var(--core));transition:width .35s ease}
+  .group{transition:background-color .35s ease,color .35s ease,border-color .35s ease,box-shadow .3s cubic-bezier(.16,1,.3,1),transform .3s cubic-bezier(.16,1,.3,1)}
+  .js-reveal .group{opacity:0;transform:translateY(14px)}
+  .js-reveal .group.in{opacity:1;transform:none}
+  .group:hover,.js-reveal .group.in:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(31,35,41,.12)}
+  .btn{transition:transform .15s ease,filter .15s ease,background-color .35s ease}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0) scale(.99)}
+  .scale button,.theme-toggle,.cfield input,.cfield select,.cfield textarea,textarea,header,details>summary,body{transition:background-color .35s ease,color .35s ease,border-color .35s ease,box-shadow .35s ease}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .js-reveal .group{opacity:1!important;transform:none!important}
+  }
 </style>
 </head>
 <body>
@@ -97,7 +114,7 @@
     <span><b>1</b> 非常不符合</span><span><b>2</b> 不太符合</span><span><b>3</b> 中立</span>
     <span><b>4</b> 较符合</span><span><b>5</b> 非常符合</span>
   </div>
-  <div class="progress"><i id="bar"></i></div>
+  <div class="progress" id="progress" role="progressbar" aria-label="填写进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bar"></i></div>
   <div class="pcount" id="pcount">核心层尚未完成</div>
   <div class="saved" id="saved"></div>
 </header>
@@ -762,6 +779,7 @@ function refresh(highlightKey){
   // progress bar: core layer weighting
   const corePart = (hAnswered/(HOLLAND_DIMS.length*HSELF))*0.6 + (valTop5.length>=3?0.2:0) + (cFilled>=4?0.2:0);
   document.getElementById('bar').style.width = (corePart*100)+'%';
+  const progEl = document.getElementById('progress'); if(progEl && typeof progEl.setAttribute === 'function') progEl.setAttribute('aria-valuenow', Math.round(corePart*100));
   let pmsg = '核心层：兴趣 ' + hAnswered + '/' + (HOLLAND_DIMS.length*HSELF)
     + ' · 价值观已排 ' + valTop5.length + ' 项 · 约束 ' + cFilled + '/4';
   if(!coreDone) pmsg += '（完成核心层才能复制）';
@@ -940,6 +958,22 @@ document.getElementById('export').addEventListener('click', ()=>{
       const lbl=document.getElementById('themeLabel'); if(lbl) lbl.textContent = next==='dark'?'深色':(next==='light'?'浅色':'跟随系统');
     }); }
     if(typeof window!=='undefined'&&window.matchMedia){ try{ const mq=window.matchMedia('(prefers-color-scheme: dark)'); if(mq&&mq.addEventListener){ mq.addEventListener('change', function(){ if(getPref()==='system') apply('system'); }); } }catch(e){} }
+  }catch(e){}
+})();
+
+// ===== v1.25 滚动入场揭示（减少动态偏好 / 无 IntersectionObserver 时自动放弃，内容保持可见）=====
+(function(){
+  try{
+    const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+    if(mq && mq.matches) return;
+    if(!('IntersectionObserver' in window)) return;
+    const groups = Array.prototype.slice.call(document.querySelectorAll('.group'));
+    if(!groups.length) return;
+    document.body.classList.add('js-reveal');
+    const io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+    groups.forEach(function(g){ io.observe(g); });
   }catch(e){}
 })();
 

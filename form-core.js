@@ -11,7 +11,7 @@
   const BF_ORDER = ['O', 'C', 'E', 'A', 'N'];
   const JUNG_ORDER = ['Ti', 'Te', 'Fi', 'Fe', 'Ni', 'Ne', 'Si', 'Se'];
   const AISUB_ORDER = ['暴露度', '适应力', '人力资本'];
-  const FORM_VERSION = '1.24';
+  const FORM_VERSION = '1.25';
 
   // ---------- 基础工具 ----------
   function esc(s) {
@@ -193,6 +193,10 @@
       + '.rescard .rd{display:inline-block;background:#0f6e56;color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;margin-right:6px}'
       + '.rescard a{color:#0f6e56;font-weight:600}'
       + 'ul{margin:6px 0;padding-left:22px} li{margin:3px 0} .meta{color:#6b7280;font-size:13px}'
+      + ':focus-visible{outline:2px solid #6c5ce7;outline-offset:2px}'
+      + '.rescard{transition:transform .2s ease,box-shadow .2s ease} .rescard:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(31,158,117,.18)}'
+      + '.viz line{stroke-dasharray:240;stroke-dashoffset:240;animation:draw 1s ease forwards} @keyframes draw{to{stroke-dashoffset:0}}'
+      + '@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.viz line{stroke-dashoffset:0}}'
       + '@media print{body{max-width:none;margin:0}.decl,.note{break-inside:avoid}.viz{break-inside:avoid}}'
       + '</style></head><body>'
       + '<h1>职业测评自报告</h1>'
