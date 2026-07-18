@@ -116,16 +116,32 @@
   function hollandHexagonSVG(sums) {
     const cx = 160, cy = 130, r = 92;
     const pts = hexPoints(cx, cy, r);
-    const poly = pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+    // 同心网格环（5/10/15/20 → 0.25/0.5/0.75/1.0），提供可读的量级参考系
+    let grid = '';
+    [0.25, 0.5, 0.75, 1].forEach(f => {
+      const rp = pts.map(p => (cx + (p.x - cx) * f).toFixed(1) + ',' + (cy + (p.y - cy) * f).toFixed(1)).join(' ');
+      grid += '<polygon class="hg-grid" points="' + rp + '"/>';
+    });
+    // 刻度标签（沿顶部 R 轴向外标 5/10/15/20）
+    let ticks = '';
+    const top = pts[0];
+    [5, 10, 15, 20].forEach(v => {
+      const f = v / 20;
+      const tx = cx + (top.x - cx) * f, ty = cy + (top.y - cy) * f;
+      ticks += '<text class="hg-tick" x="' + tx.toFixed(1) + '" y="' + (ty - 4).toFixed(1) + '" text-anchor="middle">' + v + '</text>';
+    });
     let bars = '', labels = '';
     pts.forEach(p => {
       const v = sums[p.k] || 0; const f = Math.max(0, Math.min(1, v / 20));
       const bx = cx + (p.x - cx) * f, by = cy + (p.y - cy) * f;
-      bars += '<line x1="' + cx + '" y1="' + cy + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) + '" stroke="#6c5ce7" stroke-width="4" stroke-linecap="round"/>';
-      labels += '<text x="' + (cx + (p.x - cx) * 1.16).toFixed(1) + '" y="' + (cy + (p.y - cy) * 1.16 + 4).toFixed(1) + '" font-size="12" fill="#4834d4" font-weight="600" text-anchor="middle">' + p.k + ' ' + v + '</text>';
+      bars += '<line class="hg-bar" x1="' + cx + '" y1="' + cy + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) + '"/>';
+      labels += '<text class="hg-lab" x="' + (cx + (p.x - cx) * 1.16).toFixed(1) + '" y="' + (cy + (p.y - cy) * 1.16 + 4).toFixed(1) + '" text-anchor="middle">' + p.k + ' ' + v + '</text>';
     });
-    return '<svg viewBox="0 0 320 260" width="100%" style="max-width:340px;height:auto" role="img" aria-label="Holland 兴趣六边形">'
-      + '<polygon points="' + poly + '" fill="none" stroke="#dcdcff" stroke-width="2"/>'
+    const aria = 'Holland 兴趣六边形（满分 20）：' + HOLLAND_ORDER.map(k => k + ' ' + (sums[k] || 0)).join('、');
+    return '<svg viewBox="0 0 320 260" width="100%" style="max-width:340px;height:auto" role="img" aria-label="' + aria + '">'
+      + '<title>' + aria + '</title>'
+      + grid + ticks
+      + '<polygon class="hg-frame" points="' + pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ') + '"/>'
       + bars + labels + '</svg>';
   }
   function bigfiveRadarSVG(sums) {
@@ -134,17 +150,32 @@
       const ang = (-90 + i * 72) * Math.PI / 180;
       return { k, x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) };
     });
-    const poly = pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+    // 同心网格环（5/10/15/20）
+    let grid = '';
+    [0.25, 0.5, 0.75, 1].forEach(f => {
+      const rp = pts.map(p => (cx + (p.x - cx) * f).toFixed(1) + ',' + (cy + (p.y - cy) * f).toFixed(1)).join(' ');
+      grid += '<polygon class="bf-grid" points="' + rp + '"/>';
+    });
+    // 刻度标签（沿顶部 O 轴向外标 5/10/15/20）
+    let ticks = '';
+    const top = pts[0];
+    [5, 10, 15, 20].forEach(v => {
+      const f = v / 20;
+      const tx = cx + (top.x - cx) * f, ty = cy + (top.y - cy) * f;
+      ticks += '<text class="bf-tick" x="' + tx.toFixed(1) + '" y="' + (ty - 4).toFixed(1) + '" text-anchor="middle">' + v + '</text>';
+    });
     let shape = '', labels = '';
     pts.forEach(p => {
       const v = sums[p.k] || 0; const f = Math.max(0, Math.min(1, v / 20));
       const sx = cx + (p.x - cx) * f, sy = cy + (p.y - cy) * f;
       shape += (shape ? ' ' : '') + sx.toFixed(1) + ',' + sy.toFixed(1);
-      labels += '<text x="' + (cx + (p.x - cx) * 1.18).toFixed(1) + '" y="' + (cy + (p.y - cy) * 1.18 + 4).toFixed(1) + '" font-size="12" fill="#0f6e56" font-weight="600" text-anchor="middle">' + p.k + ' ' + v + '</text>';
+      labels += '<text class="bf-lab" x="' + (cx + (p.x - cx) * 1.18).toFixed(1) + '" y="' + (cy + (p.y - cy) * 1.18 + 4).toFixed(1) + '" text-anchor="middle">' + p.k + ' ' + v + '</text>';
     });
-    return '<svg viewBox="0 0 320 260" width="100%" style="max-width:340px;height:auto" role="img" aria-label="大五人格雷达">'
-      + '<polygon points="' + poly + '" fill="none" stroke="#bfe1cb" stroke-width="2"/>'
-      + '<polygon points="' + shape + '" fill="rgba(31,158,117,.25)" stroke="#1d9e75" stroke-width="3"/>'
+    const aria = '大五人格雷达（满分 20）：' + BF_ORDER.map(k => k + ' ' + (sums[k] || 0)).join('、');
+    return '<svg viewBox="0 0 320 260" width="100%" style="max-width:340px;height:auto" role="img" aria-label="' + aria + '">'
+      + '<title>' + aria + '</title>'
+      + grid + ticks
+      + '<polygon class="bf-poly" points="' + shape + '"/>'
       + labels + '</svg>';
   }
 
@@ -176,7 +207,16 @@
     const resHTML = cards.length ? '<div class="rescards">' + cards.map(c =>
       '<div class="rescard"><span class="rd">' + c.dim + '</span>' + esc(c.t) +
       (c.u ? ' <a href="' + esc(c.u) + '" target="_blank" rel="noopener">↗</a>' : '') + '</div>').join('') + '</div>' : '';
-    const svgSec = '<div class="viz">' + hollandHexagonSVG(a.holland || {}) + (a.bfAnswered > 0 ? bigfiveRadarSVG(a.bigfive || {}) : '') + '</div>';
+    // 兴趣六边形 + 大五雷达：每个图带维度全称图注，外加配色语义图例（P1）
+    const hollandFig = '<figure class="viz-fig">' + hollandHexagonSVG(a.holland || {})
+      + '<figcaption>R 现实型 · I 研究型 · A 艺术型 · S 社会型 · E 企业型 · C 常规型（满分 20，同心环 = 5/10/15/20）</figcaption></figure>';
+    const bfFig = a.bfAnswered > 0 ? '<figure class="viz-fig">' + bigfiveRadarSVG(a.bigfive || {})
+      + '<figcaption>O 开放性 · C 尽责性 · E 外向性 · A 宜人性 · N 神经质（满分 20）</figcaption></figure>' : '';
+    const vizLegend = '<div class="viz-legend">'
+      + '<span><i class="sw sw-interest"></i>紫 = 兴趣剖面（Holland RIASEC）</span>'
+      + (a.bfAnswered > 0 ? '<span><i class="sw sw-persona"></i>绿 = 人格剖面（大五 OCEAN）</span>' : '')
+      + '</div>';
+    const svgSec = '<div class="viz">' + hollandFig + bfFig + '</div>' + vizLegend;
     // 离职取舍参考（纯展示 + 轻交互，不进分数串/不破内核）：基于价值观排序与硬约束，提供可勾选对照
     const toRowsArr = [];
     Object.keys(a.constraints || {}).filter(k => a.constraints[k]).forEach(k => {
@@ -193,19 +233,28 @@
     });
     const toIntro = '<p class="note to-intro">用你上边的「价值观排序」与「硬约束」做一张可勾选对照表。纠结"要不要离职"时，逐条对照当前工作打勾，把模糊的纠结变成可复核的信号。<b>本表只把你的输入摊开来看，不做任何决定建议。</b></p>';
     const toResultDiv = '<div class="to-result" id="toResult"><span class="to-hint">👆 勾选后，这里会汇总你的信号倾向（不存储、不上传）。</span></div>';
+    // P2：离职取舍信号仪表（纯前端，实时根据勾选态定位 marker；不进分数串/不破内核）
+    const toGauge = '<div class="to-gauge" aria-hidden="true">'
+      + '<div class="to-gauge-bar"><span class="to-gauge-marker" id="toMarker"></span></div>'
+      + '<div class="to-gauge-ends"><span>← 信号偏「留」</span><span id="toGaugeLabel">信号待计算</span><span>信号偏「走」 →</span></div>'
+      + '</div>';
     const toScript = '<scr' + 'ipt>(function(){'
       + 'var opts=document.querySelectorAll(".to-opts");'
       + 'function evalTradeoff(){var hitC=0,missV=0,okC=0,okV=0;'
       + 'opts.forEach(function(o){var t=o.getAttribute("data-type");var act=o.querySelector("button.active");if(!act)return;var s=act.getAttribute("data-s");'
       + 'if(t==="c"){if(s==="hit")hitC++;else if(s==="ok")okC++;}else{if(s==="miss")missV++;else if(s==="ok")okV++;}});'
-      + 'var el=document.getElementById("toResult");if(!el)return;var msg;'
+      + 'var el=document.getElementById("toResult");var mk=document.getElementById("toMarker");var gl=document.getElementById("toGaugeLabel");'
+      + 'var score=Math.max(0,Math.min(100,hitC*34+missV*22-(okC+okV)*14));'
+      + 'if(mk){mk.style.left=score+"%";mk.style.borderColor=score>60?"#dc2626":score>45?"#f59e0b":"#16a34a";}'
+      + 'if(gl){gl.textContent=hitC>0?"硬约束被冲破 · 离":score>=60?"偏「走」":score>=45?"混合 · 观察期":(okC+okV)>0?"偏「留」":"待计算";}'
+      + 'if(!el)return;var msg;'
       + 'if(hitC>0){msg="有 "+hitC+" 条硬约束被冲破——这是最不该忽视的离开信号，建议优先处理（沟通协商，或认真考虑离开）。";}'
       + 'else if(missV>=2){msg="有 "+missV+" 项重要价值长期未满足，倾向寻找更契合的方向；但硬约束尚稳，可先内部争取（调岗/谈薪/项目）。";}'
       + 'else if(missV===1&&(okV+okC)>0){msg="1 项价值未满足、其余基本稳，信号偏混合，建议设观察期（如 3–6 个月）再判断。";}'
       + 'else if((okC+okV)>0&&missV===0){msg="核心约束与重要价值基本被满足，当前位置尚稳，可把精力放在深耕而非切换。";}'
       + 'else{msg="继续勾选，信号会在这里汇总。";}'
       + 'el.innerHTML="<b>信号倾向：</b>"+msg;}'
-      + 'opts.forEach(function(o){o.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("button"):null;if(!b)return;var bs=o.querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].classList.remove("active");b.classList.add("active");evalTradeoff();});});'
+      + 'opts.forEach(function(o){o.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("button"):null;if(!b)return;var bs=o.querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].classList.remove("active");b.classList.add("active");evalTradeoff();});});evalTradeoff();'
       + '})();</scr' + 'ipt>';
     // 封面 + 分节导航锚点（按实际渲染顺序构建目录）
     const code = a.hollandCode || (a.holland ? hollandCode(a.holland) : '');
@@ -280,6 +329,33 @@
       + '@media (max-width:560px){.to-opts button{padding:7px 9px;margin:2px}.to-opts{white-space:normal;text-align:left}}'
       + '@media print{.to-opts button.active{background:#6c5ce7!important;color:#fff!important;border-color:#6c5ce7!important}}'
       + '@media print{body{max-width:none;margin:0;background:#fff}.decl,.note{break-inside:avoid}.viz{break-inside:avoid}.report-nav{display:none}.report-cover{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none}.cover-sub,.cover-time,.cover-local{color:#fff!important}}'
+      + ':root{--c-interest:#6c5ce7;--c-interest-soft:#dcdcff;--c-persona:#1d9e75;--c-persona-soft:#bfe1cb;--grid:#e6e9ee;--ink:#1f2933;--panel:#fff;--panel-2:#f4f5fb;--line:#e8eaed;--line-2:#eef0f3;--line-strong:#d7dbe2;--muted:#7a5b15;--muted-bg:#fff8e6;--muted-bd:#f0a020;--accent:#6c5ce7;--accent-2:#4834d4;--accent-ink:#a29bfe;--res-bg:#f1f8f4;--res-bd:#bfe1cb;--res-ink:#0f5132;--decl-bg:#f3f4ff;--decl-bd:#dcdcff;--shadow:rgba(72,52,212,.20)}'
+      + '@media (prefers-color-scheme: dark){:root{--c-interest:#a29bfe;--c-interest-soft:#322f63;--c-persona:#34d399;--c-persona-soft:#1d4636;--grid:#262c38;--ink:#e7e9ef;--panel:#181c24;--panel-2:#1f2530;--line:#2a2f3a;--line-2:#232833;--line-strong:#3a4150;--muted:#e8c87a;--muted-bg:#2a2415;--muted-bd:#6b551f;--accent:#a29bfe;--accent-2:#c7c2ff;--accent-ink:#c7c2ff;--res-bg:#143027;--res-bd:#1d4636;--res-ink:#6ee7b7;--decl-bg:#1a1d2b;--decl-bd:#322f63;--shadow:rgba(0,0,0,.45)}'
+      + 'body{color:var(--ink);background:#11141a}h1,h2,h3{color:var(--accent-2)}h2{border-left-color:var(--accent)}'
+      + 'table,th,td{background:var(--panel);color:var(--ink);border-color:var(--line)}th{background:var(--panel-2)}td{border-bottom-color:var(--line-2)}'
+      + '.rbar{background:var(--line-2)}.rbar span{background:linear-gradient(90deg,var(--accent),var(--accent-ink))}'
+      + '.raw{background:var(--panel-2);border-color:var(--line);color:var(--ink)}'
+      + '.note{color:var(--muted);background:var(--muted-bg);border-color:var(--muted-bd)}'
+      + '.decl{color:var(--ink);background:var(--decl-bg);border-color:var(--decl-bd)}'
+      + '.viz{background:var(--panel);border-color:var(--line)}'
+      + '.rescard{background:var(--res-bg);border-color:var(--res-bd);color:var(--res-ink)}.rescard .rd{background:var(--c-persona)}.rescard a{color:var(--c-persona)}'
+      + '.report-nav{background:rgba(17,20,26,.92);border-color:var(--line)}.report-nav a{color:var(--ink)}.report-nav a:hover{background:var(--panel-2);color:var(--accent-2)}'
+      + '.to-opts button{background:var(--panel);border-color:var(--line-strong);color:var(--ink)}.to-opts button:hover{background:var(--panel-2)}.to-opts button.active{background:var(--accent);color:#fff;border-color:var(--accent)}'
+      + '.to-result{background:var(--decl-bg);border-color:var(--decl-bd);color:var(--ink)}'
+      + '.report-cover{background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 14px 34px var(--shadow)}}'
+      + '.hg-grid{fill:none;stroke:var(--grid);stroke-width:1}.hg-frame{fill:none;stroke:var(--c-interest-soft);stroke-width:2}'
+      + '.hg-bar{stroke:var(--c-interest);stroke-width:4;stroke-linecap:round}'
+      + '.hg-lab{fill:var(--ink);font-size:12px;font-weight:600}.hg-tick{fill:var(--muted);font-size:9px;opacity:.85}'
+      + '.bf-grid{fill:none;stroke:var(--grid);stroke-width:1}.bf-poly{fill:rgba(31,158,117,.22);stroke:var(--c-persona);stroke-width:3}'
+      + '.bf-lab{fill:var(--ink);font-size:12px;font-weight:600}.bf-tick{fill:var(--muted);font-size:9px;opacity:.85}'
+      + '.viz-fig{margin:0;text-align:center}.viz-fig figcaption{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.5;max-width:340px}'
+      + '.viz-legend{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin:4px 0 2px;font-size:12px;color:var(--muted)}'
+      + '.viz-legend .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}'
+      + '.viz-legend .sw-interest{background:var(--c-interest)}.viz-legend .sw-persona{background:var(--c-persona)}'
+      + '.to-gauge{margin:6px 0 2px}.to-gauge-bar{position:relative;height:10px;border-radius:999px;background:linear-gradient(90deg,#16a34a,#f59e0b 55%,#dc2626);overflow:visible}'
+      + '.to-gauge-marker{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #334155;transform:translate(-50%,-50%);left:50%;transition:left .35s cubic-bezier(.16,1,.3,1),border-color .25s;box-shadow:0 1px 4px rgba(0,0,0,.3)}'
+      + '.to-gauge-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:7px}'
+      + '@media print{:root{--ink:#1f2933;--panel:#fff;--panel-2:#f4f5fb;--line:#e8eaed;--line-2:#eef0f3;--muted:#7a5b15;--muted-bg:#fff8e6;--decl-bg:#f3f4ff;--res-bg:#f1f8f4;--res-ink:#0f5132}body{color:#1f2933;background:#fff}table,th,td{background:#fff;color:#1f2933}.to-opts button.active{background:#6c5ce7!important;color:#fff!important}}'
       + '</style></head><body id="top">'
       + '<header class="report-cover">'
       + '<div class="cover-kicker">职业测评 · 自报告</div>'
@@ -294,7 +370,7 @@
       + '<table class="dt"><tr><th>维度</th><th>得分</th><th>分布</th></tr>' + hRows + '</table>'
       + '<h2 id="sec-values">' + CN[si++] + '、职业价值观排序（Top ' + (a.values ? a.values.length : 0) + '）</h2><ol>' + vRows + '</ol>'
       + '<h2 id="sec-constraints">' + CN[si++] + '、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>' + cRows + '</table>' + resumeNote + stageNote
-      + (toRowsArr.length ? '<h2 id="sec-tradeoff">' + CN[si++] + '、离职取舍参考</h2>' + toIntro + '<table class="to-table"><tr><th>你的信号源</th><th>对照当前工作</th></tr>' + toRowsArr.join('') + '</table>' + toResultDiv : '')
+      + (toRowsArr.length ? '<h2 id="sec-tradeoff">' + CN[si++] + '、离职取舍参考</h2>' + toIntro + '<table class="to-table"><tr><th>你的信号源</th><th>对照当前工作</th></tr>' + toRowsArr.join('') + '</table>' + toResultDiv + toGauge : '')
       + (depth ? '<h2 id="' + idDepth + '">' + CN[si++] + '、深度层（可选）</h2>' + depth : '')
       + (resHTML ? '<h2 id="' + idRes + '">' + CN[si++] + '、下一步资源（按兴趣码）</h2>' + resHTML : '')
       + '<h2 id="sec-raw">' + CN[si++] + '、原始分数串（可贴回对话复核）</h2>'
