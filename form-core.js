@@ -177,15 +177,47 @@
       '<div class="rescard"><span class="rd">' + c.dim + '</span>' + esc(c.t) +
       (c.u ? ' <a href="' + esc(c.u) + '" target="_blank" rel="noopener">↗</a>' : '') + '</div>').join('') + '</div>' : '';
     const svgSec = '<div class="viz">' + hollandHexagonSVG(a.holland || {}) + (a.bfAnswered > 0 ? bigfiveRadarSVG(a.bigfive || {}) : '') + '</div>';
+    // 离职取舍参考（纯展示 + 轻交互，不进分数串/不破内核）：基于价值观排序与硬约束，提供可勾选对照
+    const toRowsArr = [];
+    Object.keys(a.constraints || {}).filter(k => a.constraints[k]).forEach(k => {
+      toRowsArr.push('<tr><td class="to-name">🔒 ' + esc(k) + '：' + esc(a.constraints[k]) + '</td>'
+        + '<td class="to-opts" data-type="c" data-key="' + esc(k) + '">'
+        + '<button type="button" data-s="ok">满足</button><button type="button" data-s="na">说不清</button><button type="button" data-s="hit">被冲破</button>'
+        + '</td></tr>');
+    });
+    (a.values || []).slice(0, 5).forEach(x => {
+      toRowsArr.push('<tr><td class="to-name">⭐ ' + x.r + '. ' + esc(x.name) + '</td>'
+        + '<td class="to-opts" data-type="v" data-key="' + esc(x.name) + '">'
+        + '<button type="button" data-s="ok">满足</button><button type="button" data-s="na">说不清</button><button type="button" data-s="miss">不满足</button>'
+        + '</td></tr>');
+    });
+    const toIntro = '<p class="note to-intro">用你上边的「价值观排序」与「硬约束」做一张可勾选对照表。纠结"要不要离职"时，逐条对照当前工作打勾，把模糊的纠结变成可复核的信号。<b>本表只把你的输入摊开来看，不做任何决定建议。</b></p>';
+    const toResultDiv = '<div class="to-result" id="toResult"><span class="to-hint">👆 勾选后，这里会汇总你的信号倾向（不存储、不上传）。</span></div>';
+    const toScript = '<scr' + 'ipt>(function(){'
+      + 'var opts=document.querySelectorAll(".to-opts");'
+      + 'function evalTradeoff(){var hitC=0,missV=0,okC=0,okV=0;'
+      + 'opts.forEach(function(o){var t=o.getAttribute("data-type");var act=o.querySelector("button.active");if(!act)return;var s=act.getAttribute("data-s");'
+      + 'if(t==="c"){if(s==="hit")hitC++;else if(s==="ok")okC++;}else{if(s==="miss")missV++;else if(s==="ok")okV++;}});'
+      + 'var el=document.getElementById("toResult");if(!el)return;var msg;'
+      + 'if(hitC>0){msg="有 "+hitC+" 条硬约束被冲破——这是最不该忽视的离开信号，建议优先处理（沟通协商，或认真考虑离开）。";}'
+      + 'else if(missV>=2){msg="有 "+missV+" 项重要价值长期未满足，倾向寻找更契合的方向；但硬约束尚稳，可先内部争取（调岗/谈薪/项目）。";}'
+      + 'else if(missV===1&&(okV+okC)>0){msg="1 项价值未满足、其余基本稳，信号偏混合，建议设观察期（如 3–6 个月）再判断。";}'
+      + 'else if((okC+okV)>0&&missV===0){msg="核心约束与重要价值基本被满足，当前位置尚稳，可把精力放在深耕而非切换。";}'
+      + 'else{msg="继续勾选，信号会在这里汇总。";}'
+      + 'el.innerHTML="<b>信号倾向：</b>"+msg;}'
+      + 'opts.forEach(function(o){o.addEventListener("click",function(e){var b=e.target.closest?e.target.closest("button"):null;if(!b)return;var bs=o.querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].classList.remove("active");b.classList.add("active");evalTradeoff();});});'
+      + '})();</scr' + 'ipt>';
     // 封面 + 分节导航锚点（按实际渲染顺序构建目录）
     const code = a.hollandCode || (a.holland ? hollandCode(a.holland) : '');
     const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八'];
     let si = 1;
+    const hasTradeoff = ((a.values && a.values.length) || Object.keys(a.constraints || {}).some(k => a.constraints[k]));
     const navItems = [
       { id: 'sec-interest', label: '兴趣剖面' },
       { id: 'sec-values', label: '价值观排序' },
       { id: 'sec-constraints', label: '约束条件' }
     ];
+    if (hasTradeoff) navItems.push({ id: 'sec-tradeoff', label: '离职取舍参考' });
     const idDepth = depth ? 'sec-depth' : null;
     const idRes = resHTML ? 'sec-resources' : null;
     if (idDepth) navItems.push({ id: idDepth, label: '深度层' });
@@ -236,6 +268,17 @@
       + '.rescard{transition:transform .2s ease,box-shadow .2s ease} .rescard:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(31,158,117,.18)}'
       + '.viz line{stroke-dasharray:240;stroke-dashoffset:240;animation:draw 1s ease forwards} @keyframes draw{to{stroke-dashoffset:0}}'
       + '@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.viz line{stroke-dashoffset:0}html{scroll-behavior:auto}}'
+      + '.to-table{width:100%;border-collapse:separate;border-spacing:0;margin:10px 0;font-size:14px;background:#fff;border:1px solid #e8eaed;border-radius:10px;overflow:hidden}'
+      + '.to-table th{background:#f4f5fb;color:#3d444d;font-weight:600;text-align:left;padding:9px 11px;border-bottom:1px solid #e8eaed}'
+      + '.to-table td{border-bottom:1px solid #eef0f3;padding:8px 11px;text-align:left}.to-table tbody tr:last-child td{border-bottom:none}'
+      + '.to-name{font-size:13.5px;color:#374151}'
+      + '.to-opts{white-space:nowrap;text-align:right}.to-opts button{font:inherit;font-size:12.5px;padding:5px 11px;margin:0 3px;border:1px solid #d7dbe2;background:#fff;color:#4b5563;border-radius:999px;cursor:pointer;transition:background .15s ease,border-color .15s ease}'
+      + '.to-opts button:hover{background:#eef0fb}'
+      + '.to-opts button.active{background:#6c5ce7;color:#fff;border-color:#6c5ce7;font-weight:600}'
+      + '.to-result{margin:14px 0 4px;padding:13px 15px;background:#f3f4ff;border:1px solid #dcdcff;border-radius:12px;font-size:14px;line-height:1.65;color:#374151}'
+      + '@media (prefers-reduced-motion: reduce){.to-opts button{transition:none}}'
+      + '@media (max-width:560px){.to-opts button{padding:7px 9px;margin:2px}.to-opts{white-space:normal;text-align:left}}'
+      + '@media print{.to-opts button.active{background:#6c5ce7!important;color:#fff!important;border-color:#6c5ce7!important}}'
       + '@media print{body{max-width:none;margin:0;background:#fff}.decl,.note{break-inside:avoid}.viz{break-inside:avoid}.report-nav{display:none}.report-cover{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none}.cover-sub,.cover-time,.cover-local{color:#fff!important}}'
       + '</style></head><body id="top">'
       + '<header class="report-cover">'
@@ -251,11 +294,13 @@
       + '<table class="dt"><tr><th>维度</th><th>得分</th><th>分布</th></tr>' + hRows + '</table>'
       + '<h2 id="sec-values">' + CN[si++] + '、职业价值观排序（Top ' + (a.values ? a.values.length : 0) + '）</h2><ol>' + vRows + '</ol>'
       + '<h2 id="sec-constraints">' + CN[si++] + '、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>' + cRows + '</table>' + resumeNote + stageNote
+      + (toRowsArr.length ? '<h2 id="sec-tradeoff">' + CN[si++] + '、离职取舍参考</h2>' + toIntro + '<table class="to-table"><tr><th>你的信号源</th><th>对照当前工作</th></tr>' + toRowsArr.join('') + '</table>' + toResultDiv : '')
       + (depth ? '<h2 id="' + idDepth + '">' + CN[si++] + '、深度层（可选）</h2>' + depth : '')
       + (resHTML ? '<h2 id="' + idRes + '">' + CN[si++] + '、下一步资源（按兴趣码）</h2>' + resHTML : '')
       + '<h2 id="sec-raw">' + CN[si++] + '、原始分数串（可贴回对话复核）</h2>'
       + '<div class="raw">' + esc(a.raw) + '</div>'
       + '<div class="decl" id="sec-decl"><b>声明：</b>本结果仅基于你的自评输入，用于辅助自我觉察与探索，不具备临床诊断或招聘决策效力。任何维度分数都不应给一个人"贴标签"——人是动态的，兴趣、能力与适应力都可通过行动改变。重大职业决策请结合自身实情、行业信息与必要时的专业咨询。</div>'
+      + toScript
       + '</body></html>';
   }
 
