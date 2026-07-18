@@ -9,14 +9,27 @@
     --bg:#f7f8fa; --card:#ffffff; --ink:#1f2329; --sub:#646a73;
     --line:#e5e6eb; --brand:#3a6ea5; --brand-soft:#eaf1f8; --core:#7a5cc0;
     --ok:#2e9e5b; --warn:#d97706; --chip:#eef0f3;
+    --shadow:0 6px 22px rgba(31,35,41,.08);
+  }
+  html[data-theme="dark"]{
+    --bg:#15171c; --card:#1f2229; --ink:#e8eaed; --sub:#9aa1ab;
+    --line:#33373f; --brand:#6aa6e0; --brand-soft:#1d2a38; --core:#a78be0;
+    --ok:#4cc07e; --warn:#e0a040; --chip:#272b33;
+    --shadow:0 6px 22px rgba(0,0,0,.4);
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
     line-height:1.6;}
   header{padding:20px 24px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
-  header h1{margin:0;font-size:20px}
+  header h1{margin:0;font-size:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   header p{margin:6px 0 0;color:var(--sub);font-size:13px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .theme-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--chip);
+    color:var(--ink);border-radius:20px;padding:6px 12px;font-size:13px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .theme-toggle:hover{border-color:var(--brand)}
+  .privacy{font-size:11.5px;color:var(--sub);margin-top:10px;background:var(--brand-soft);border:1px solid var(--line);
+    border-radius:8px;padding:6px 10px;line-height:1.5}
   .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--sub)}
   .legend b{color:var(--ink)}
   .progress{margin-top:12px;height:8px;background:var(--chip);border-radius:6px;overflow:hidden}
@@ -26,7 +39,7 @@
   .scen-tip{font-size:13px;color:var(--sub);margin:4px 0 8px}
   .scen-label{display:block;font-size:13px;margin:4px 0;cursor:pointer}
   main{max-width:880px;margin:18px auto;padding:0 16px}
-  .group{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+  .group{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
   .group h2{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:8px}
   .group .gscore{margin-left:auto;font-size:13px;color:var(--sub)}
   .group .gscore b{color:var(--brand);font-size:15px}
@@ -42,38 +55,44 @@
   .scale button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
   .gtools{margin-top:8px;font-size:12px}
   .gtools a{color:var(--brand);cursor:pointer;margin-right:14px;text-decoration:none}
-  .results{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:8px 0 28px}
+  .results{position:sticky;bottom:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:8px 0 28px;box-shadow:var(--shadow)}
   .results h2{margin:0 0 10px;font-size:16px}
   .sums{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
   .sums div{background:var(--chip);border-radius:8px;padding:8px;text-align:center;font-size:13px}
   .sums div b{display:block;font-size:18px;color:var(--brand)}
-  textarea{width:100%;height:120px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--ink)}
+  textarea{width:100%;height:120px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--ink);background:var(--bg)}
   .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-  .btn{border:none;border-radius:8px;padding:9px 16px;font-size:14px;cursor:pointer}
+  .btn{border:none;border-radius:8px;padding:9px 16px;font-size:14px;cursor:pointer;transition:.12s}
   .btn.primary{background:var(--brand);color:#fff}
+  .btn.primary:hover{filter:brightness(1.06)}
   .btn.ghost{background:var(--chip);color:var(--ink)}
+  .btn.ghost:hover{border-color:var(--brand)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .hint{font-size:12px;color:var(--warn);margin-top:8px;min-height:16px}
   .rankrow{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px dashed var(--line)}
   .rankrow:first-of-type{border-top:none}
   .rankrow .vname{flex:1;font-size:14px}
-  .rankrow select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  .rankrow select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:var(--bg);color:var(--ink)}
   .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .cfield{display:flex;flex-direction:column;gap:4px}
   .cfield label{font-size:13px;color:var(--sub)}
-  .cfield input,.cfield select,.cfield textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:14px;font-family:inherit;color:var(--ink)}
+  .cfield input,.cfield select,.cfield textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:14px;font-family:inherit;color:var(--ink);background:var(--bg)}
   details{margin-bottom:16px}
   details>summary{cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;list-style:none}
   details>summary::-webkit-details-marker{display:none}
   details[open]>summary{margin-bottom:16px}
-  @media(max-width:560px){.sums{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.scale button{width:30px;height:30px}header{padding:14px 14px}header h1{font-size:17px}header p{font-size:12px}.legend{font-size:11px;gap:6px}.q .txt{font-size:13px}main{padding:0 10px}.group{padding:12px}.scale{gap:4px}}@media(max-width:380px){.scale button{width:26px;height:26px;font-size:12px}.sums{grid-template-columns:repeat(2,1fr)}.legend span{margin-right:4px}}
+  @media(max-width:560px){.sums{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.scale button{width:30px;height:30px}header{padding:14px 14px}header h1{font-size:17px}header p{font-size:12px}.legend{font-size:11px;gap:6px}.q .txt{font-size:13px}main{padding:0 10px}.group{padding:12px}.scale{gap:4px}.theme-toggle{padding:5px 10px;font-size:12px}}@media(max-width:380px){.scale button{width:26px;height:26px;font-size:12px}.sums{grid-template-columns:repeat(2,1fr)}.legend span{margin-right:4px}}
 </style>
 </head>
 <body>
 <header>
-  <h1>职业测评表单 · 多源三角验证</h1>
+  <div class="topbar">
+    <h1>职业测评表单 · 多源三角验证</h1>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换浅色 / 深色 / 跟随系统">🌗 <span id="themeLabel">跟随系统</span></button>
+  </div>
   <p>欢迎来做一次<strong>职业自我探索</strong>。本表采用<strong>模块化渐进</strong>设计：先完成<strong>核心层</strong>（职业兴趣 + 工作价值观排序 + 现实约束，约 8–10 分钟），即可生成有参考性的三角验证画像；<strong>深度层</strong>（荣格八维 + 大五人格 + AI 适应力，均为可选）点开可让"思维方式""性情""抗替代性"几根支柱更完整。所有题目无标准答案，照实选最准。</p>
   <p style="margin:8px 0 0;padding:8px 12px;background:#f3f4ff;border-left:3px solid #6c5ce7;border-radius:6px;color:#4b5563;font-size:13px">这不是算命，也不是给你的判决书——它是一份帮你梳理思路的<strong>探索线索</strong>。人是动态的：兴趣、能力与适应力，都能通过行动慢慢改变。测完把分数串贴回对话，规划师会结合你的经历，给出可复核的推荐与下一步。</p>
+  <div class="privacy">🔒 <b>本地优先</b>：你的作答只保存在本机浏览器（localStorage），不会上传到任何服务器；分数串与报告仅在你主动复制 / 导出时生成，可随时点「全部重置」清除。</div>
   <div class="legend">
     <span><b>1</b> 非常不符合</span><span><b>2</b> 不太符合</span><span><b>3</b> 中立</span>
     <span><b>4</b> 较符合</span><span><b>5</b> 非常符合</span>
@@ -99,6 +118,7 @@
   <div class="hint" id="hint">完成核心层（兴趣 24 题 + 价值观排序 + 约束），就能复制分数串贴回「职业规划师」对话啦。深度层（荣格八维）可之后慢慢补。</div>
 </div>
 
+<script src="form-core.js"></script>
 <script>
 // ===== 题库规模元信息（供回归校验与文档同步）=====
 const SELF = 4;            // 每功能渲染题数（荣格融合池抽 4，深度层用）
@@ -759,49 +779,45 @@ function refresh(highlightKey){
   sg.innerHTML = HOLLAND_DIMS.map(d=>`<div>${d.key}<b>${hsums[d.key]}</b></div>`).join('');
 
   // output strings
-  const hollandLine = 'HOLLAND: ' + HOLLAND_DIMS.map(d=>d.key+':'+hsums[d.key]).join(';');
-  const valueLine = 'VALUES: ' + valTop5.map(x=>(x.r)+'='+x.name).join(';');
-  const cFilledPairs = Object.keys(cs).filter(k=>cs[k]).map(k=>k+'='+cs[k]);
-  const constraintLine = 'CONSTRAINTS: ' + (cFilledPairs.length ? cFilledPairs.join(';') : '（未填）');
-  // Jung optional
-  let jungLine = '';
-  if(jAnswered > 0){
-    jungLine = 'JUNG: ' + FUNCS.map(f=>{
-      const vals = []; for(let p=0; p<SELF; p++) vals.push(state[`${f.key}-${p}`] || 0);
-      return `${f.key}:${vals.join(',')}`;
-    }).join('; ');
-  }
-  // scenario + prio
+  // 分数串：委托 form-core.js 的 buildScoreString（带 v1.24 版本前缀，便于后端向后兼容）
   const scenAns = [];
   scenOpts.forEach(function(opts, qi){ const v = scenState[qi]; if(v && v.letter) scenAns.push('Q'+(qi+1)+'='+v.letter+'｜'+v.text); });
   const prioAns = [];
   PRIORITY_GROUPS.forEach(function(grp, gi){ const L = prioState[gi]; if(L) prioAns.push('P'+(gi+1)+'='+L); });
-
-  let bfLine = '';
-  if(bfAnswered > 0){ bfLine = 'BIGFIVE: ' + BIGFIVE_DIMS.map(d=>d.key+':'+bfsums[d.key]).join(';'); }
-  let aisubLine = '';
-  if(asubAnswered > 0){ aisubLine = 'AISUB: ' + AISUB_DIMS.map(d=>d.key+':'+asubsums[d.key]).join(';'); }
-  const blocks = [hollandLine, valueLine, constraintLine];
-  if(jungLine) blocks.push(jungLine);
-  if(bfLine) blocks.push(bfLine);
-  if(aisubLine) blocks.push(aisubLine);
   const marketOn = (document.getElementById('c_market') && document.getElementById('c_market').value === '\u662f');
-  if(marketOn) blocks.push('MARKET: \u662f');
-  if(prioAns.length) blocks.push('PRIO: ' + prioAns.join('; '));
-  if(scenAns.length) blocks.push('SCENARIO: ' + scenAns.join('; '));
   const stageEl = document.querySelector('input[name="stage"]:checked');
   const stageVal = stageEl ? stageEl.value : '';
-  if(stageVal){ blocks.push('STAGE: ' + stageVal); }
   const resumeEl = document.getElementById('resume_text');
   const resumeVal = resumeEl ? resumeEl.value.trim() : '';
-  if(resumeVal){ blocks.push('RESUME: ' + resumeVal); }
-  const out = blocks.join('\n');
+  const jungRawForContract = (jAnswered > 0) ? FUNCS.reduce(function(m, f){
+    m[f.key] = []; for(let p=0; p<SELF; p++) m[f.key].push(state[`${f.key}-${p}`] || 0); return m;
+  }, {}) : null;
+  const out = buildScoreString({
+    holland: hsums,
+    values: valTop5,
+    constraints: cs,
+    jungRaw: jungRawForContract,
+    jungAnswered: jAnswered,
+    bfRaw: (bfAnswered > 0) ? bfsums : null,
+    bfAnswered: bfAnswered,
+    asubRaw: (asubAnswered > 0) ? asubsums : null,
+    asubAnswered: asubAnswered,
+    marketOn: marketOn,
+    prioAns: prioAns,
+    scenAns: scenAns,
+    stageVal: stageVal,
+    resumeVal: resumeVal
+  });
 
   // Holland 代码（前 3 高维）供报告导出
   const hCode = HOLLAND_DIMS.slice().sort((a,b)=>hsums[b.key]-hsums[a.key]).slice(0,3).map(d=>d.key).join('');
   AGG = { holland: hsums, hollandCode: hCode, values: valTop5, constraints: cs,
+          hollandName: HOLLAND_DIMS.reduce((m,d)=>{ m[d.key]=d.name; return m; }, {}),
+          jungName: FUNCS.reduce((m,f)=>{ m[f.key]=f.name; return m; }, {}),
+          bfName: BIGFIVE_DIMS.reduce((m,d)=>{ m[d.key]=d.name; return m; }, {}),
+          asubName: AISUB_DIMS.reduce((m,d)=>{ m[d.key]=d.name; return m; }, {}),
           jung: jsums, jungAnswered: jAnswered, bigfive: bfsums, bfAnswered: bfAnswered,
-          aisub: asubsums, asubAnswered: asubAnswered, marketOn: marketOn, raw: out, coreDone: coreDone, resumeText: (document.getElementById('resume_text') ? document.getElementById('resume_text').value.trim() : ''), stage: stageVal };
+          aisub: asubsums, asubAnswered: asubAnswered, marketOn: marketOn, raw: out, coreDone: coreDone, resumeText: (resumeEl ? resumeEl.value.trim() : ''), stage: stageVal };
 
   const ta = document.getElementById('out');
   ta.value = out;
@@ -902,53 +918,30 @@ document.getElementById('export').addEventListener('click', ()=>{
   const h=document.getElementById('hint'); h.style.color='var(--ok)'; h.textContent='已导出 HTML 自报告（可离线打开 / 分享）。';
 });
 
-function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function hbar(v, max){ const pct = Math.max(2, Math.min(100, Math.round(v/max*100))); return '<div class="rbar"><span style="width:'+pct+'%"></span></div>'; }
-function buildReportHTML(a){
-  const now = new Date().toLocaleString('zh-CN');
-  const resumeNote = a.resumeText ? '<p class="note">已提供经历 / 简历（'+a.resumeText.length+' 字），将在对话中作为实证融入画像。</p>' : '';
-  const stageNote = a.stage ? '<p class="note">当前阶段：'+esc(a.stage)+'（报告语气已据此校准）。</p>' : '';
-  const hRows = HOLLAND_DIMS.map(d=>{ const v=a.holland[d.key]||0; return '<tr><td>'+d.key+' · '+esc(d.name)+'</td><td>'+v+'/20</td><td>'+hbar(v,20)+'</td></tr>'; }).join('');
-  const vRows = a.values.length ? a.values.map(x=>'<li>'+x.r+'. '+esc(x.name)+'</li>').join('') : '<li>（未排序）</li>';
-  const cRows = Object.keys(a.constraints).filter(k=>a.constraints[k]).map(k=>'<tr><td>'+esc(k)+'</td><td>'+esc(a.constraints[k])+'</td></tr>').join('');
-  let depth = '';
-  if(a.jungAnswered>0){
-    const order = FUNCS.slice().sort((x,y)=>(a.jung[y.key]||0)-(a.jung[x.key]||0));
-    const rows = order.map(f=>'<tr><td>'+f.key+'</td><td>'+esc(f.name)+'</td><td>'+(a.jung[f.key]||0)+'/20</td><td>'+hbar(a.jung[f.key]||0,20)+'</td></tr>').join('');
-    depth += '<h3>深度层 · 荣格八维（'+(a.jungAnswered)+'/'+TOTAL_JUNG+'）</h3><table class="dt">'+rows+'</table>';
-  }
-  if(a.bfAnswered>0){
-    const rows = BIGFIVE_DIMS.map(d=>'<tr><td>'+d.key+'</td><td>'+esc(d.name)+'</td><td>'+(a.bigfive[d.key]||0)+'/20</td><td>'+hbar(a.bigfive[d.key]||0,20)+'</td></tr>').join('');
-    depth += '<h3>深度层 · 大五人格（'+(a.bfAnswered)+'/20）</h3><table class="dt">'+rows+'</table>';
-  }
-  if(a.asubAnswered>0){
-    const rows = AISUB_DIMS.map(d=>'<tr><td>'+esc(d.name)+'</td><td>'+(a.aisub[d.key]||0)+'/'+(AISUB_N*5)+'</td><td>'+hbar(a.aisub[d.key]||0,AISUB_N*5)+'</td></tr>').join('');
-    depth += '<h3>深度层 · AI 适应力（'+(a.asubAnswered)+'/9）</h3><table class="dt">'+rows+'</table>';
-  }
-  if(a.marketOn){ depth += '<p class="note">已开启「实时市场数据」：在对话中联网获取岗位供需 / 薪资趋势。</p>'; }
-  const sec5 = depth ? '五' : '四';
-  return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>职业测评自报告</title><style>'
-    + 'body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;max-width:780px;margin:28px auto;padding:0 18px;color:#1f2933;line-height:1.7}'
-    + 'h1{font-size:23px;border-bottom:3px solid #6c5ce7;padding-bottom:8px;margin-bottom:4px} h2{font-size:17px;margin-top:30px;color:#4834d4} h3{font-size:15px;margin:20px 0 8px;color:#6c5ce7}'
-    + 'table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px} td{border:1px solid #e4e7eb;padding:7px 9px;text-align:left}'
-    + '.rbar{background:#eef0f3;border-radius:6px;height:11px;width:170px;overflow:hidden} .rbar span{display:block;height:100%;background:linear-gradient(90deg,#6c5ce7,#a29bfe)}'
-    + '.raw{background:#f6f7fb;border:1px solid #e4e7eb;border-radius:8px;padding:12px;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all}'
-    + '.code{font-size:22px;font-weight:700;color:#6c5ce7;letter-spacing:3px}'
-    + '.note{font-size:13px;color:#6b7280;background:#fff8e6;border-left:3px solid #f0a020;padding:7px 11px;border-radius:4px}'
-    + '.decl{font-size:13px;color:#4b5563;background:#f3f4ff;border:1px solid #dcdcff;border-radius:8px;padding:12px 15px;margin-top:22px}'
-    + 'ul{margin:6px 0;padding-left:22px} li{margin:3px 0} .meta{color:#6b7280;font-size:13px}</style></head><body>'
-    + '<h1>职业测评自报告</h1>'
-    + '<p class="meta">生成时间：'+esc(now)+'　·　方法：多源三角验证（兴趣 + 价值观 + 约束 + 可选深度层）</p>'
-    + '<h2>一、兴趣剖面 Holland　<span class="code">'+esc(a.hollandCode)+'</span></h2>'
-    + '<table class="dt"><tr><th>维度</th><th>得分</th><th>分布</th></tr>'+hRows+'</table>'
-    + '<h2>二、职业价值观排序（Top '+a.values.length+'）</h2><ol>'+vRows+'</ol>'
-    + '<h2>三、约束与现实条件</h2><table><tr><th>字段</th><th>内容</th></tr>'+cRows+'</table>'+resumeNote+stageNote
-    + (depth ? '<h2>四、深度层（可选）</h2>'+depth : '')
-    + '<h2>'+sec5+'、原始分数串（可贴回对话复核）</h2>'
-    + '<div class="raw">'+esc(a.raw)+'</div>'
-    + '<div class="decl"><b>声明：</b>本结果仅基于你的自评输入，用于辅助自我觉察与探索，不具备临床诊断或招聘决策效力。任何维度分数都不应给一个人“贴标签”——人是动态的，兴趣、能力与适应力都可通过行动改变。重大职业决策请结合自身实情、行业信息与必要时的专业咨询。</div>'
-    + '</body></html>';
-}
+// esc / hbar / buildReportHTML 已抽离到 form-core.js（通过 <script src="form-core.js"> 加载，挂到 window 全局供本脚本调用）
+
+// ===== 主题切换（light / dark / system），本地优先、跟随系统偏好 =====
+(function(){
+  try{
+    const KEY='career_theme_v1';
+    const root=(typeof document!=='undefined'&&document.documentElement)?document.documentElement:null;
+    function apply(t){ if(!root) return; try{
+      let theme=t;
+      if(t==='system'){ const mq=(typeof window!=='undefined'&&window.matchMedia)?window.matchMedia('(prefers-color-scheme: dark)'):null; theme=(mq&&mq.matches)?'dark':'light'; }
+      root.setAttribute('data-theme', theme);
+    }catch(e){} }
+    function getPref(){ try{ return (typeof localStorage!=='undefined'&&localStorage.getItem(KEY))||'system'; }catch(e){ return 'system'; } }
+    function setPref(p){ try{ if(typeof localStorage!=='undefined') localStorage.setItem(KEY,p); }catch(e){} }
+    apply(getPref());
+    const btn=(typeof document!=='undefined')?document.getElementById('themeToggle'):null;
+    if(btn&&btn.addEventListener){ btn.addEventListener('click', function(){
+      const cur=getPref(); const next=cur==='system'?'light':(cur==='light'?'dark':'system');
+      setPref(next); apply(next);
+      const lbl=document.getElementById('themeLabel'); if(lbl) lbl.textContent = next==='dark'?'深色':(next==='light'?'浅色':'跟随系统');
+    }); }
+    if(typeof window!=='undefined'&&window.matchMedia){ try{ const mq=window.matchMedia('(prefers-color-scheme: dark)'); if(mq&&mq.addEventListener){ mq.addEventListener('change', function(){ if(getPref()==='system') apply('system'); }); } }catch(e){} }
+  }catch(e){}
+})();
 
 loadState(); syncAll(); refresh();
 </script>
