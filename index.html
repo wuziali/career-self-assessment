@@ -99,6 +99,97 @@
     *,*::before,*::after{animation:none!important;transition:none!important}
     .js-reveal .group{opacity:1!important;transform:none!important}
   }
+  /* ===== v1.26 UI 设计系统：排版层级 + 8pt 间距 + 组件精修 ===== */
+  :root{
+    /* 间距令牌（8pt 栅格） */
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px;
+    /* 圆角令牌 */
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+    /* 字号令牌（模块化排版） */
+    --fs-display:22px; --fs-title:16px; --fs-body:14.5px; --fs-sub:13px; --fs-sm:12px; --fs-xs:11px;
+    /* 中性色阶与语义色 */
+    --surface:#ffffff; --surface-2:#f1f3f5; --ink-2:#3d444d; --line-2:#d7dbe0;
+    --brand-ink:#1f4f82; --focus:var(--brand);
+    /* 阴影分层 */
+    --sh-1:0 1px 2px rgba(16,24,40,.04),0 6px 18px rgba(16,24,40,.06);
+    --sh-2:0 8px 28px rgba(16,24,40,.10);
+  }
+  html[data-theme="dark"]{
+    --surface:#181b21; --surface-2:#21252d; --ink-2:#c2c8d0; --line-2:#2f353f;
+    --brand-ink:#8cc0ee; --brand:#2f6fb3;
+    --sh-1:0 1px 2px rgba(0,0,0,.40),0 6px 18px rgba(0,0,0,.35);
+    --sh-2:0 10px 30px rgba(0,0,0,.50);
+  }
+  /* —— 基础排版 —— */
+  body{font-size:var(--fs-body);color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  header h1{font-size:var(--fs-display);font-weight:700;letter-spacing:-.01em;line-height:1.3;color:var(--ink)}
+  header p{font-size:var(--fs-sub);line-height:1.7;color:var(--ink-2);max-width:74ch;margin:8px 0 0}
+  header p.note-card{margin:10px 0 0;padding:10px 14px;background:linear-gradient(90deg,var(--brand-soft),transparent);
+    border-left:3px solid var(--core);border-radius:var(--r-sm);color:var(--ink-2);font-size:var(--fs-sub);
+    line-height:1.65;max-width:none;font-weight:400}
+  header p.note-card strong{color:var(--ink);font-weight:600}
+  .privacy{font-size:var(--fs-xs);color:var(--sub);background:var(--surface-2);border:1px solid var(--line);
+    border-radius:var(--r-sm);padding:7px 11px;line-height:1.55}
+  .legend{margin-top:var(--sp-3);gap:var(--sp-2)}
+  .legend span{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-pill);
+    padding:3px 10px;font-size:var(--fs-xs);color:var(--ink-2)}
+  .legend b{color:var(--brand-ink);font-weight:600}
+  /* —— 容器与卡片节奏 —— */
+  main{max-width:820px;margin:var(--sp-5) auto;padding:0 var(--sp-4)}
+  .group{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);
+    padding:var(--sp-4) var(--sp-5);margin-bottom:var(--sp-4);box-shadow:var(--sh-1)}
+  .group h2{font-size:var(--fs-title);font-weight:600;letter-spacing:-.005em}
+  .group .gscore{font-size:var(--fs-sub);color:var(--sub)}
+  .group .gscore b{font-size:15px;color:var(--brand);font-weight:700}
+  .badge{font-size:var(--fs-xs);padding:3px 9px;border-radius:var(--r-pill);font-weight:600}
+  /* —— 题目行 —— */
+  .q{padding:12px 0;border-top:1px solid var(--line)}
+  .q:first-of-type{border-top:none}
+  .q .no{flex:0 0 24px;width:24px;height:24px;line-height:24px;background:var(--brand-soft);color:var(--brand-ink);
+    font-weight:600;font-size:var(--fs-xs)}
+  .q .txt{flex:1;font-size:var(--fs-body);line-height:1.6;color:var(--ink);max-width:60ch;padding-top:1px}
+  .scale button{width:36px;height:36px;border-radius:var(--r-sm);font-size:14px;font-weight:500;
+    border:1px solid var(--line);color:var(--ink-2)}
+  .scale button:hover{border-color:var(--brand);color:var(--brand-ink)}
+  .scale button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700;
+    box-shadow:0 4px 12px rgba(47,111,179,.32)}
+  /* —— 价值观排序 / 约束字段 —— */
+  .rankrow{padding:10px 0;border-top:1px solid var(--line)}
+  .rankrow .vname{font-size:var(--fs-body);color:var(--ink)}
+  .cgrid{gap:var(--sp-4)}
+  .cfield label{font-size:var(--fs-sub);color:var(--ink-2);font-weight:500}
+  .cfield input,.cfield select,.cfield textarea{border-radius:var(--r-sm);padding:9px 11px;border:1px solid var(--line);
+    background:var(--bg);color:var(--ink);font-size:var(--fs-body)}
+  .cfield input:focus,.cfield select:focus,.cfield textarea:focus{border-color:var(--brand);
+    box-shadow:0 0 0 3px rgba(47,111,179,.14);outline:none}
+  textarea{border-radius:var(--r-sm);font-size:var(--fs-sm);background:var(--surface-2);color:var(--ink)}
+  /* —— 结果停靠栏 —— */
+  .results{border-radius:var(--r-lg);padding:var(--sp-4) var(--sp-5);box-shadow:var(--sh-2);border-color:var(--line-2)}
+  .results h2{font-size:var(--fs-title);font-weight:600}
+  .sums{gap:var(--sp-2);margin-bottom:var(--sp-3)}
+  .sums div{background:var(--surface-2);border-radius:var(--r-sm);padding:9px 6px;font-size:var(--fs-sm);color:var(--sub)}
+  .sums div b{font-size:17px;color:var(--brand);font-weight:700}
+  .hint{font-size:var(--fs-sub);color:var(--warn);min-height:18px}
+  /* —— 按钮系统 —— */
+  .btn{border-radius:var(--r-sm);padding:10px 18px;font-size:var(--fs-body);font-weight:600;letter-spacing:.01em;
+    transition:transform .15s ease,filter .15s ease,background-color .35s ease,box-shadow .35s ease}
+  .btn.primary{background:var(--brand);color:#fff;box-shadow:var(--sh-1)}
+  .btn.primary:hover{filter:brightness(1.07);box-shadow:var(--sh-2)}
+  .btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--brand);color:var(--brand-ink)}
+  .actions{gap:var(--sp-2)}
+  .gtools a{font-size:var(--fs-sm);color:var(--brand-ink);font-weight:500}
+  /* —— 深度层折叠 —— */
+  details>summary{border-radius:var(--r-md);padding:var(--sp-4) var(--sp-5);font-size:15px;font-weight:600;color:var(--ink)}
+  .scen-tip{font-size:var(--fs-sub);color:var(--ink-2)}
+  .scen-label{font-size:var(--fs-body);color:var(--ink)}
+  @media(max-width:560px){
+    main{padding:0 var(--sp-3)}
+    .group{padding:var(--sp-3) var(--sp-4)}
+    header{padding:14px 14px}
+    .scale button{width:32px;height:32px}
+    .q .txt{font-size:13.5px}
+  }
 </style>
 </head>
 <body>
@@ -108,7 +199,7 @@
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换浅色 / 深色 / 跟随系统">🌗 <span id="themeLabel">跟随系统</span></button>
   </div>
   <p>欢迎来做一次<strong>职业自我探索</strong>。本表采用<strong>模块化渐进</strong>设计：先完成<strong>核心层</strong>（职业兴趣 + 工作价值观排序 + 现实约束，约 8–10 分钟），即可生成有参考性的三角验证画像；<strong>深度层</strong>（荣格八维 + 大五人格 + AI 适应力，均为可选）点开可让"思维方式""性情""抗替代性"几根支柱更完整。所有题目无标准答案，照实选最准。</p>
-  <p style="margin:8px 0 0;padding:8px 12px;background:#f3f4ff;border-left:3px solid #6c5ce7;border-radius:6px;color:#4b5563;font-size:13px">这不是算命，也不是给你的判决书——它是一份帮你梳理思路的<strong>探索线索</strong>。人是动态的：兴趣、能力与适应力，都能通过行动慢慢改变。测完把分数串贴回对话，规划师会结合你的经历，给出可复核的推荐与下一步。</p>
+  <p class="note-card">这不是算命，也不是给你的判决书——它是一份帮你梳理思路的<strong>探索线索</strong>。人是动态的：兴趣、能力与适应力，都能通过行动慢慢改变。测完把分数串贴回对话，规划师会结合你的经历，给出可复核的推荐与下一步。</p>
   <div class="privacy">🔒 <b>本地优先</b>：你的作答只保存在本机浏览器（localStorage），不会上传到任何服务器；分数串与报告仅在你主动复制 / 导出时生成，可随时点「全部重置」清除。</div>
   <div class="legend">
     <span><b>1</b> 非常不符合</span><span><b>2</b> 不太符合</span><span><b>3</b> 中立</span>
