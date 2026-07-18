@@ -190,40 +190,90 @@
     .scale button{width:32px;height:32px}
     .q .txt{font-size:13.5px}
   }
+  /* ===== v1.28 表单抬头 / 结果精简：填答区不被占用 ===== */
+  header{padding:12px 18px}
+  header h1{font-size:18px}
+  .hbar{display:flex;align-items:center;gap:12px;margin-top:8px}
+  .hbar .progress{flex:1;margin-top:0;height:6px}
+  .hbar-foot{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap}
+  .privacy-mini{font-size:11.5px;color:var(--sub);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-pill);padding:3px 10px;white-space:nowrap}
+  .saved{margin-top:0;font-size:11.5px}
+  .intro{margin:14px auto 0;max-width:840px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);box-shadow:var(--sh-1)}
+  .intro>summary{list-style:none;cursor:pointer;padding:11px 16px;font-size:14px;font-weight:600;color:var(--ink)}
+  .intro>summary::-webkit-details-marker{display:none}
+  .intro-body{padding:2px 16px 14px}
+  .intro-body .note-card{margin-top:0}
+  .intro-body .intro-welcome{margin:8px 0 0;font-size:var(--fs-sub);line-height:1.7;color:var(--ink-2)}
+  .intro-body .legend{margin-top:10px}
+  .intro[open]>summary{border-bottom:1px solid var(--line);padding-bottom:11px}
+  /* 结果面板：默认收起仅留细条；展开后脱离 sticky 落在页尾 */
+  .results{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0;margin:10px auto 24px;max-width:880px;box-shadow:var(--shadow);overflow:hidden;position:static}
+  .results.collapsed{position:sticky;bottom:0;margin-bottom:14px}
+  .results-head{display:flex;align-items:center;gap:10px;padding:9px 14px}
+  .results-toggle{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:var(--r-pill);padding:5px 12px;font-size:12px;cursor:pointer;transition:border-color .15s,background-color .35s ease}
+  .results-toggle:hover{border-color:var(--brand)}
+  .results-mini{flex:1;font-size:12.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .results-body{padding:6px 16px 16px}
+  .results.collapsed .results-body{display:none}
+  @media(max-width:560px){
+    .results{max-width:none;margin-left:10px;margin-right:10px}
+    .intro{margin-left:10px;margin-right:10px}
+    header{padding:10px 12px}
+    header h1{font-size:16px}
+    .results-mini{font-size:11.5px}
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="topbar">
-    <h1>职业测评表单 · 多源三角验证</h1>
+    <h1>🧭 职业测评 · 多源三角验证</h1>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换浅色 / 深色 / 跟随系统">🌗 <span id="themeLabel">跟随系统</span></button>
   </div>
-  <p>欢迎来做一次<strong>职业自我探索</strong>。本表采用<strong>模块化渐进</strong>设计：先完成<strong>核心层</strong>（职业兴趣 + 工作价值观排序 + 现实约束，约 8–10 分钟），即可生成有参考性的三角验证画像；<strong>深度层</strong>（荣格八维 + 大五人格 + AI 适应力，均为可选）点开可让"思维方式""性情""抗替代性"几根支柱更完整。所有题目无标准答案，照实选最准。</p>
-  <p class="note-card">这不是算命，也不是给你的判决书——它是一份帮你梳理思路的<strong>探索线索</strong>。人是动态的：兴趣、能力与适应力，都能通过行动慢慢改变。测完把分数串贴回对话，规划师会结合你的经历，给出可复核的推荐与下一步。</p>
-  <div class="privacy">🔒 <b>本地优先</b>：你的作答只保存在本机浏览器（localStorage），不会上传到任何服务器；分数串与报告仅在你主动复制 / 导出时生成，可随时点「全部重置」清除。</div>
-  <div class="legend">
-    <span><b>1</b> 非常不符合</span><span><b>2</b> 不太符合</span><span><b>3</b> 中立</span>
-    <span><b>4</b> 较符合</span><span><b>5</b> 非常符合</span>
+  <div class="hbar">
+    <div class="progress" id="progress" role="progressbar" aria-label="填写进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bar"></i></div>
+    <span class="pcount" id="pcount">核心层尚未完成</span>
   </div>
-  <div class="progress" id="progress" role="progressbar" aria-label="填写进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bar"></i></div>
-  <div class="pcount" id="pcount">核心层尚未完成</div>
-  <div class="saved" id="saved"></div>
+  <div class="hbar-foot">
+    <span class="privacy-mini">🔒 本地优先</span>
+    <span class="saved" id="saved"></span>
+  </div>
 </header>
 
-<main id="form"></main>
+<main>
+  <details class="intro">
+    <summary>📋 使用说明 · 关于本测评 · 隐私</summary>
+    <div class="intro-body">
+      <p class="intro-welcome">欢迎来做一次<strong>职业自我探索</strong>。本表采用<strong>模块化渐进</strong>设计：先完成<strong>核心层</strong>（职业兴趣 + 工作价值观排序 + 现实约束，约 8–10 分钟），即可生成有参考性的三角验证画像；<strong>深度层</strong>（荣格八维 + 大五人格 + AI 适应力，均为可选）点开可让"思维方式""性情""抗替代性"几根支柱更完整。所有题目无标准答案，照实选最准。</p>
+      <p class="note-card">这不是算命，也不是给你的判决书——它是一份帮你梳理思路的<strong>探索线索</strong>。人是动态的：兴趣、能力与适应力，都能通过行动慢慢改变。测完把分数串贴回对话，规划师会结合你的经历，给出可复核的推荐与下一步。</p>
+      <div class="privacy">🔒 <b>本地优先</b>：你的作答只保存在本机浏览器（localStorage），不会上传到任何服务器；分数串与报告仅在你主动复制 / 导出时生成，可随时点「全部重置」清除。</div>
+      <div class="legend">
+        <span><b>1</b> 非常不符合</span><span><b>2</b> 不太符合</span><span><b>3</b> 中立</span>
+        <span><b>4</b> 较符合</span><span><b>5</b> 非常符合</span>
+      </div>
+    </div>
+  </details>
+  <div id="form"></div>
+</main>
 
-<div class="results" id="results">
-  <h2>结果</h2>
-  <div class="sums" id="sums"></div>
-  <textarea id="out" readonly placeholder="完成核心层后，这里会生成可复制的分数串……"></textarea>
-  <div class="actions">
-    <button class="btn primary" id="copy" disabled>复制分数串</button>
-    <button class="btn ghost" id="rand">随机填写</button>
-    <button class="btn ghost" id="sample">示例填写</button>
-    <button class="btn ghost" id="reset">全部重置</button>
-    <button class="btn ghost" id="export">导出报告</button>
+<div class="results collapsed" id="results">
+  <div class="results-head">
+    <button class="results-toggle" id="resultsToggle" type="button" aria-expanded="false">▴ 展开结果</button>
+    <div class="results-mini" id="resultsMini">完成核心层后显示兴趣代码与进度</div>
   </div>
-  <div class="hint" id="hint">完成核心层（兴趣 24 题 + 价值观排序 + 约束），就能复制分数串贴回「职业规划师」对话啦。深度层（荣格八维）可之后慢慢补。</div>
+  <div class="results-body">
+    <h2>结果</h2>
+    <div class="sums" id="sums"></div>
+    <textarea id="out" readonly placeholder="完成核心层后，这里会生成可复制的分数串……"></textarea>
+    <div class="actions">
+      <button class="btn primary" id="copy" disabled>复制分数串</button>
+      <button class="btn ghost" id="rand">随机填写</button>
+      <button class="btn ghost" id="sample">示例填写</button>
+      <button class="btn ghost" id="reset">全部重置</button>
+      <button class="btn ghost" id="export">导出报告</button>
+    </div>
+    <div class="hint" id="hint">完成核心层（兴趣 24 题 + 价值观排序 + 约束），就能复制分数串贴回「职业规划师」对话啦。深度层（荣格八维）可之后慢慢补。</div>
+  </div>
 </div>
 
 <script src="form-core.js"></script>
@@ -882,6 +932,11 @@ function refresh(highlightKey){
     pmsg += (extra ? ' · 深度层已答'+extra : ' · 深度层可选未做');
   }
   document.getElementById('pcount').textContent = pmsg;
+  const rmEl = document.getElementById('resultsMini');
+  if(rmEl){
+    const rcode = hAnswered>0 ? HOLLAND_DIMS.slice().sort((a,b)=>hsums[b.key]-hsums[a.key]).slice(0,3).map(d=>d.key).join('') : '—';
+    rmEl.textContent = '兴趣代码 ' + rcode + ' · 填写进度 ' + Math.round(corePart*100) + '%';
+  }
 
   // sums grid (Holland 6 dims)
   const sg = document.getElementById('sums');
@@ -1068,6 +1123,18 @@ document.getElementById('export').addEventListener('click', ()=>{
   }catch(e){}
 })();
 
+// v1.28 结果面板收起 / 展开
+(function(){
+  const rt = document.getElementById('resultsToggle');
+  const res = document.getElementById('results');
+  if(rt && res){
+    rt.addEventListener('click', function(){
+      const c = res.classList.toggle('collapsed');
+      rt.setAttribute('aria-expanded', c ? 'false' : 'true');
+      rt.textContent = c ? '▴ 展开结果' : '▾ 收起结果';
+    });
+  }
+})();
 loadState(); syncAll(); refresh();
 </script>
 </body>
