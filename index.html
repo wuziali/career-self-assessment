@@ -22,6 +22,7 @@
   .progress{margin-top:12px;height:8px;background:var(--chip);border-radius:6px;overflow:hidden}
   .progress>i{display:block;height:100%;width:0;background:var(--brand);transition:width .2s}
   .pcount{font-size:12px;color:var(--sub);margin-top:6px}
+  .saved{font-size:12px;color:var(--ok);margin-top:4px;height:14px;opacity:0;transition:opacity .3s}
   .scen-tip{font-size:13px;color:var(--sub);margin:4px 0 8px}
   .scen-label{display:block;font-size:13px;margin:4px 0;cursor:pointer}
   main{max-width:880px;margin:18px auto;padding:0 16px}
@@ -65,7 +66,7 @@
   details>summary{cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;list-style:none}
   details>summary::-webkit-details-marker{display:none}
   details[open]>summary{margin-bottom:16px}
-  @media(max-width:560px){.sums{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.scale button{width:30px;height:30px}}
+  @media(max-width:560px){.sums{grid-template-columns:repeat(3,1fr)}.cgrid{grid-template-columns:1fr}.scale button{width:30px;height:30px}header{padding:14px 14px}header h1{font-size:17px}header p{font-size:12px}.legend{font-size:11px;gap:6px}.q .txt{font-size:13px}main{padding:0 10px}.group{padding:12px}.scale{gap:4px}}@media(max-width:380px){.scale button{width:26px;height:26px;font-size:12px}.sums{grid-template-columns:repeat(2,1fr)}.legend span{margin-right:4px}}
 </style>
 </head>
 <body>
@@ -79,6 +80,7 @@
   </div>
   <div class="progress"><i id="bar"></i></div>
   <div class="pcount" id="pcount">核心层尚未完成</div>
+  <div class="saved" id="saved"></div>
 </header>
 
 <main id="form"></main>
@@ -105,6 +107,31 @@ const POOL_SIZES = { self: 13, selfDraw: 4, priorityPairsPerGroup: 3, priorityDr
                      hollandPerDim: 4, hollandDims: 6, valuesCount: 9, bigfivePerDim: 4, bigfiveDims: 5, aisubPerDim: 3, aisubDims: 3 };
 const state = {};          // "Ti-0": value（荣格融合题库）
 let AGG = {};            // 汇总供报告导出（buildReportHTML 使用）
+
+// ===== v1.23 A 项：自动保存（localStorage）=====
+const SAVE_KEY = 'career_self_assess_v1';
+function saveState(){
+  const data = { h:Object.assign({},hstate), j:Object.assign({},state), bf:Object.assign({},bfstate), as:Object.assign({},asubstate), c:{}, val:{}, stage:'', resume:'', market:'' };
+  ['c_city','c_move','c_salary','c_risk','c_window','c_invest','c_family','c_redline'].forEach(function(id){ const el=document.getElementById(id); if(el) data.c[id.replace('c_','')]=el.value; });
+  document.querySelectorAll('select[data-vi]').forEach(function(s){ if(s.value) data.val[s.dataset.vi]=s.value; });
+  const st=document.querySelector('input[name="stage"]:checked'); if(st) data.stage=st.value;
+  const rt=document.getElementById('resume_text'); if(rt) data.resume=rt.value;
+  const mk=document.getElementById('c_market'); if(mk) data.market=mk.value;
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  const sv=document.getElementById('saved'); if(sv){ sv.textContent='已自动保存 \u2713'; sv.style.opacity='1'; clearTimeout(sv._t); sv._t=setTimeout(function(){ sv.style.opacity='0'; },1200); }
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return;
+    const d=JSON.parse(raw);
+    Object.assign(hstate, d.h||{}); Object.assign(state, d.j||{}); Object.assign(bfstate, d.bf||{}); Object.assign(asubstate, d.as||{});
+    if(d.c) Object.keys(d.c).forEach(function(k){ const el=document.getElementById('c_'+k); if(el) el.value=d.c[k]; });
+    if(d.val) document.querySelectorAll('select[data-vi]').forEach(function(s){ if(d.val[s.dataset.vi]) s.value=d.val[s.dataset.vi]; });
+    if(d.stage){ const r=document.querySelector('input[name="stage"][value="'+d.stage+'"]'); if(r) r.checked=true; }
+    if(d.resume){ const rt=document.getElementById('resume_text'); if(rt) rt.value=d.resume; }
+    if(d.market){ const mk=document.getElementById('c_market'); if(mk) mk.value=d.market; }
+  }catch(e){}
+}
 
 // ===== 核心层（一）：Holland RIASEC 职业兴趣（每维 4 题，1–5，求和 4–20）=====
 const HOLLAND_DIMS = [
@@ -782,6 +809,7 @@ function refresh(highlightKey){
   document.getElementById('hint').textContent = coreDone
     ? (jAnswered>0 ? '核心层 + 深度层已完整，复制后贴回对话即可。' : '核心层已完整，复制后贴回对话即可（深度层可后补）。')
     : '完成核心层（兴趣 24 题 + 价值观排序 + 约束 4 项）才能复制。深度层（荣格八维）可选。';
+  try{ saveState(); }catch(e){}
 }
 
 document.getElementById('copy').addEventListener('click', ()=>{
@@ -806,6 +834,8 @@ document.getElementById('reset').addEventListener('click', ()=>{
   const rt=document.getElementById('resume_text'); if(rt) rt.value='';
   document.querySelectorAll('input[name="stage"]').forEach(r=>r.checked=false);
   refresh();
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  const sv=document.getElementById('saved'); if(sv) sv.textContent='';
 });
 
 function syncAll(){
@@ -920,7 +950,7 @@ function buildReportHTML(a){
     + '</body></html>';
 }
 
-refresh();
+loadState(); syncAll(); refresh();
 </script>
 </body>
 </html>
